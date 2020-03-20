@@ -7,6 +7,9 @@ from pcraster.framework import *
 from fame import *
 
 
+seed = 1
+setrandomseed(seed)
+numpy.random.seed(seed)
 
 
 
@@ -52,16 +55,20 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
     self.household.frontdoor.add_property('default_propensity')
     self.household.frontdoor.add_property('alpha')
     self.household.frontdoor.add_property('beta')
+    self.household.frontdoor.add_property('gamma')
     self.household.frontdoor.add_property('buffersize')
+    self.household.frontdoor.add_property('neighbours')
 
     nr_objects = self.household.nr_objects
     self.household.frontdoor.alpha.values = 0.15
     self.household.frontdoor.beta.values = 0.6
-    self.household.frontdoor.buffersize.values = 500
+    self.household.frontdoor.gamma.values = 0.5
+    self.household.frontdoor.buffersize.values = 1000
     self.household.frontdoor.propensity.values = numpy.random.uniform(-1, 1, (nr_objects,))
     self.household.frontdoor.default_propensity.values = numpy.random.uniform(-1, 1, (nr_objects))
 
-    print(self.household.frontdoor.default_propensity)
+    self.household.frontdoor.neighbours.values = neighbour_network(nr_objects, 2, 0.1, seed)
+
 
 
     # Food stores, 1d agents fttb
@@ -82,7 +89,7 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
 
 
     self.foodstore.frontdoor.propensity.values = numpy.random.uniform(-1, 1, (nr_objects))
-    self.foodstore.frontdoor.buffersize.values = 500
+    self.foodstore.frontdoor.buffersize.values = 1000
     self.foodstore.frontdoor.delta = 0.2
 
     self.foodstore.add_property_set('surrounding')
@@ -116,8 +123,12 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
 
     tmp2 =  self.household.frontdoor.beta * (neighboured_store_prop * (1.0 - abs(self.household.frontdoor.propensity)))
 
+    # Social network
+    social_neighbours_prop = network_average(self.household.frontdoor.neighbours, self.household.frontdoor.propensity)
+    tmp3 =  self.household.frontdoor.gamma * (social_neighbours_prop * (1.0 - abs(self.household.frontdoor.propensity)))
 
-    self.household.frontdoor.propensity += self.timestep * (tmp1 + tmp2)
+
+    self.household.frontdoor.propensity += self.timestep * (tmp1 + tmp2 + tmp3)
 
 
     # Foodstores
@@ -126,6 +137,11 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
     neighboured_houses_prop = focal_average_others(self.foodstore.frontdoor.domain, self.household.frontdoor.domain, self.household.frontdoor.propensity, self.foodstore.frontdoor.buffersize, total_average, self.foodstore.frontdoor.propensity)
 
     self.foodstore.frontdoor.propensity += self.foodstore.frontdoor.delta * self.timestep * (neighboured_houses_prop - self.foodstore.frontdoor.propensity)
+
+
+
+
+
 
 
     # We plainly write to PCRaster maps for simplicity of (timeseries) display
@@ -141,9 +157,6 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
 
 
 
-seed = 1
-setrandomseed(seed)
-numpy.random.seed(seed)
 
 timesteps = 100
 samples = 2
