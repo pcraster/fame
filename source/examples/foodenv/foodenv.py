@@ -41,7 +41,7 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
 
 
     locations = Points()
-    locations.read('house_locs_utr.csv')
+    locations.read('h.csv')
 
 
 
@@ -62,11 +62,11 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
 
     nr_objects = self.household.nr_objects
     self.household.frontdoor.alpha.values = 0.15
-    self.household.frontdoor.beta.values = 0.6
+    self.household.frontdoor.beta.values = 0.5
     self.household.frontdoor.gamma.values = 0.5
     self.household.frontdoor.buffersize.values = 500
-    self.household.frontdoor.propensity.values = -0.17
-    self.household.frontdoor.default_propensity.values = numpy.random.uniform(-1, 1, (nr_objects))
+    self.household.frontdoor.propensity.values = -0.17 # numpy.random.uniform(-1, 1, (nr_objects))
+    self.household.frontdoor.default_propensity.values = 0.4
 
     self.household.frontdoor.neighbours.values = neighbour_network(nr_objects, 40, 0.1, seed)
 
@@ -108,8 +108,7 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
   def dynamic(self):
     print('dynamic {}'.format(self.currentTimeStep()))
     # Houses
-    # First term
-    tmp1 = self.household.frontdoor.alpha * (self.household.frontdoor.default_propensity - self.household.frontdoor.propensity)
+    term1 = self.household.frontdoor.alpha * (self.household.frontdoor.default_propensity - self.household.frontdoor.propensity)
 
     # Second term
 
@@ -122,14 +121,14 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
     neighboured_store_prop = focal_average_others(self.household.frontdoor.domain, self.foodstore.frontdoor.domain, self.foodstore.frontdoor.propensity, self.household.frontdoor.buffersize, total_average, self.household.frontdoor.propensity)
 
 
-    tmp2 =  self.household.frontdoor.beta * (neighboured_store_prop * (1.0 - abs(self.household.frontdoor.propensity)))
+    term2 =  self.household.frontdoor.beta * (neighboured_store_prop * (1.0 - abs(self.household.frontdoor.propensity)))
 
     # Social network
     social_neighbours_prop = network_average(self.household.frontdoor.neighbours, self.household.frontdoor.propensity, os.path.join(str(self.currentSampleNumber()), 'nw_{}.txt'.format(self.currentTimeStep())))
-    tmp3 =  self.household.frontdoor.gamma * (social_neighbours_prop * (1.0 - abs(self.household.frontdoor.propensity)))
+    term3 =  self.household.frontdoor.gamma * (social_neighbours_prop * (1.0 - abs(self.household.frontdoor.propensity)))
 
 
-    self.household.frontdoor.propensity += self.timestep * (tmp1 + tmp2 + tmp3)
+    self.household.frontdoor.propensity += self.timestep * (term1 + term2 + term3)
 
 
     # Foodstores
