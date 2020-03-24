@@ -9,22 +9,12 @@ from .lue_propertyset import *
 
 class Phenomenon(object):
 
-    def __init__(self, working_dir=os.getcwd()):
+    def __init__(self, nr_objects, working_dir=os.getcwd()):
 
-      self._property_sets = set()
+        self._property_sets = set()
 
-      self.working_dir = working_dir
-
-      self.current_timestep = None
-
-
-    @property
-    def current_timestep(self):
-      return self._current_timestep
-
-    @current_timestep.setter
-    def current_timestep(self, value):
-      self._current_timestep = value
+        self.working_dir = working_dir
+        self._nr_objects = nr_objects
 
 
 
@@ -34,6 +24,7 @@ class Phenomenon(object):
 
     def __getattr__(self, property_set_name):
       result = None
+
       for pset in self._property_sets:
         if pset.__name__ == property_set_name:
           result = pset
@@ -43,15 +34,16 @@ class Phenomenon(object):
 
 
 
-    def __setattr__(self, name, value):
 
-      if isinstance(value, Phenomenon):
-        raise NotImplementedError
+    def add_property_set(self, value):
+      assert isinstance(value, str)
+
+      p = PropertySet(self._nr_objects) #self)
+      p.__name__ = value
+      self._property_sets.add(p)
 
 
-      elif isinstance(value, PropertySet):
-        value.__name__ = name
-        self._property_sets.add(value)
+    @property
+    def nr_objects(self):
+      return self._nr_objects
 
-      else:
-        self.__dict__[name] = value

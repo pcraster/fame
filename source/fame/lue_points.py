@@ -68,9 +68,14 @@ class Points(object):
 
   def __next__(self):
         if self.iter_idx == self.nr_items:
+            self.iter_idx = 0
             raise StopIteration
 
         values = (self.xcoord[self.iter_idx], self.ycoord[self.iter_idx])
         self.iter_idx += 1
 
         return values
+
+
+  def __len__(self):
+      return len(self.xcoord)

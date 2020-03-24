@@ -1,0 +1,111 @@
+import copy
+
+from osgeo import gdal
+from osgeo import ogr
+from osgeo import osr
+
+
+
+
+
+
+
+def focal_average_others(start_prop, dest_prop, value_prop, buffer_size, default_value, ret_prop):
+  # start_prop carries start locations
+  # dest_prop value layer to obtain neighbour values
+
+  tmp_prop = copy.deepcopy(ret_prop)
+
+
+
+  # Brute assumption here for the CRS, this should be in the dataset itself somewhere...
+  spatial_ref = osr.SpatialReference()
+  spatial_ref.ImportFromEPSG(28992)
+
+  # First we make a point feature with houses
+  name = 'houses'
+
+  geo_out = 'foodenv.gpkg'
+  # ds = ogr.GetDriverByName('GPKG').CreateDataSource(geo_out)
+
+
+
+  memdriver = ogr.GetDriverByName('MEMORY')
+  ds = memdriver.CreateDataSource(geo_out)
+
+
+
+
+
+
+
+
+
+
+  # Second we make a point feature from which we will obtain the values
+  # Holding all objects
+  lyr_stores = ds.CreateLayer('values', geom_type=ogr.wkbPoint, srs=spatial_ref)
+
+
+  field = ogr.FieldDefn('value', ogr.OFTReal)
+  lyr_stores.CreateField(field)
+
+
+  # ToDo: Here we need to get the object ids, actually...
+  for idx, p in enumerate(dest_prop):#.pset_domain):
+    point = ogr.Geometry(ogr.wkbPoint)
+
+    point.AddPoint(p[0], p[1])
+    feat = ogr.Feature(lyr_stores.GetLayerDefn())
+    feat.SetGeometry(point)
+
+    val = value_prop.values[idx]
+    feat.SetField('value', val)
+
+    lyr_stores.CreateFeature(feat)
+
+
+  lyr_stores = None
+  lyr_stores = ds.GetLayer('values')
+
+  default_value = default_value.values[0,...]
+  # For each object in point locations:
+  c = 0
+  for idx, p in enumerate(start_prop): #.pset_domain:
+
+    lyr_shop = ds.CreateLayer('destination_locations', geom_type=ogr.wkbPoint, srs=spatial_ref)
+    # just a round buffer
+    lyr_dist = ds.CreateLayer('source_buffer', geom_type=ogr.wkbPolygon, srs=spatial_ref)
+    point = ogr.Geometry(ogr.wkbPoint)
+    point.AddPoint(p[0], p[1])
+    poly = point.Buffer(float(buffer_size.values[idx]))
+    feat = ogr.Feature(lyr_dist.GetLayerDefn())
+    feat.SetGeometry(poly)
+    lyr_dist.CreateFeature(feat)
+
+
+    lyr_stores.SetSpatialFilter(poly)
+
+    lyr_stores.Clip(lyr_dist, lyr_shop, options=['SKIP_FAILURES=NO'])
+
+    shops_within = lyr_shop.GetFeatureCount()
+
+    object_value = 0.0
+    if shops_within == 0:
+      object_value = default_value
+    else:
+      val = 0.0
+      fcount = 0
+      for shop_feat in lyr_shop:
+        val += shop_feat.GetField('value')
+        fcount += 1
+
+      object_value = val / fcount
+
+    tmp_prop.values[idx,...] = object_value
+
+    ds.DeleteLayer('destination_locations')
+    ds.DeleteLayer('source_buffer')
+
+
+  return tmp_prop

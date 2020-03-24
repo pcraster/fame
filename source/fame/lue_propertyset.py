@@ -8,13 +8,25 @@ import fame.lue_property as lue_property
 
 class PropertySet(object):
 
-    def __init__(self):
+    def __init__(self, phen):
+
+      self._phen = phen
 
       self._properties = set()
 
       self.__name__ = None
 
-      self.__dict__['domain'] = None
+      self._domain = None
+
+
+    @property
+    def domain(self):
+      return self._domain
+
+
+    def _nr_objects(self):
+      return self._phen
+
 
 
     def __len__(self):
@@ -22,32 +34,44 @@ class PropertySet(object):
 
 
 
-    def __setattr__(self, name, value):
+
+
+    def __getattr__(self, property_name):
+      result = None
+      for p in self._properties:
+        if p.__name__ == property_name:
+          result = p
+
+
+      return result
 
 
 
-        if name == '__name__':
-          self.__dict__[name] = value
+    def set_space_domain(self, variable, values):
+      assert isinstance(variable, str)
+      if isinstance(values, lue_points.Points):
 
-        elif name == 'domain':
-          assert isinstance(value, lue_points.Points) or isinstance(value, lue_areas.Areas)
-
-          self.__dict__[name] = value
-
-        elif isinstance(value, lue_property.Property):
-
-          if hasattr(self, 'domain'):
-            value.pset_domain = self.domain
-
-          value.name = name
-          self.__dict__[name] = value
+        self._domain = values
 
 
-    def __getattr__(self, property_set_name):
-      pass
+      elif isinstance(values, lue_areas.Areas):
+
+        self._domain = values
 
 
+      else:
+        raise NotImplementedError
 
-    def __repr__(self):
-      msg = 'Property set "{}" with domain "{}" and properties "{}"'.format(self.__name__, self.domain, self._properties)
-      return msg
+      for p in self._properties:
+        p.pset_domain = self._domain
+
+
+    def add_property(self, value):
+
+      assert isinstance(value, str)
+
+      p = lue_property.Property(self._phen)
+      p.__name__ = value
+      p.pset_domain = self._domain
+
+      self._properties.add(p)

@@ -3,7 +3,8 @@ import datetime
 
 from pcraster.framework import *
 
-
+import sys
+sys.path.insert(0, os.path.abspath('../../'))
 from fame import *
 
 
@@ -40,7 +41,7 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
 
 
     locations = Points()
-    locations.read('houses.csv')
+    locations.read('houses_locs_utr.csv')
 
 
 
@@ -63,11 +64,11 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
     self.household.frontdoor.alpha.values = 0.15
     self.household.frontdoor.beta.values = 0.6
     self.household.frontdoor.gamma.values = 0.5
-    self.household.frontdoor.buffersize.values = 1000
-    self.household.frontdoor.propensity.values = numpy.random.uniform(-1, 1, (nr_objects,))
+    self.household.frontdoor.buffersize.values = 500
+    self.household.frontdoor.propensity.values = -0.17
     self.household.frontdoor.default_propensity.values = numpy.random.uniform(-1, 1, (nr_objects))
 
-    self.household.frontdoor.neighbours.values = neighbour_network(nr_objects, 2, 0.1, seed)
+    self.household.frontdoor.neighbours.values = neighbour_network(nr_objects, 40, 0.1, seed)
 
 
 
@@ -89,7 +90,7 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
 
 
     self.foodstore.frontdoor.propensity.values = numpy.random.uniform(-1, 1, (nr_objects))
-    self.foodstore.frontdoor.buffersize.values = 1000
+    self.foodstore.frontdoor.buffersize.values = 500
     self.foodstore.frontdoor.delta = 0.2
 
     self.foodstore.add_property_set('surrounding')
@@ -124,7 +125,7 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
     tmp2 =  self.household.frontdoor.beta * (neighboured_store_prop * (1.0 - abs(self.household.frontdoor.propensity)))
 
     # Social network
-    social_neighbours_prop = network_average(self.household.frontdoor.neighbours, self.household.frontdoor.propensity)
+    social_neighbours_prop = network_average(self.household.frontdoor.neighbours, self.household.frontdoor.propensity, os.path.join(str(self.currentSampleNumber()), 'nw_{}.txt'.format(self.currentTimeStep())))
     tmp3 =  self.household.frontdoor.gamma * (social_neighbours_prop * (1.0 - abs(self.household.frontdoor.propensity)))
 
 
@@ -148,17 +149,17 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
     sample_dir = str(self.currentSampleNumber())
 
     fname = 'houses_{}.map'.format(self.currentTimeStep())
-    pset_report(self.household.frontdoor.propensity, fname, sample_dir)
+    pset_report(self.household.frontdoor.propensity, fname, sample_dir,'h')
 
     fname = 'shops_{}.map'.format(self.currentTimeStep())
-    pset_report(self.foodstore.frontdoor.propensity, fname, sample_dir)
+    pset_report(self.foodstore.frontdoor.propensity, fname, sample_dir,'s')
 
 
 
 
 
 
-timesteps = 100
+timesteps = 200
 samples = 2
 
 myModel = FoodConsumption()
