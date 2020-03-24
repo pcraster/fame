@@ -149,10 +149,10 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
     sample_dir = str(self.currentSampleNumber())
 
     fname = 'houses_{}.map'.format(self.currentTimeStep())
-    pset_report(self.household.frontdoor.propensity, fname, sample_dir,'h')
+    pset_report(self.household.frontdoor.propensity, fname, sample_dir, self.currentTimeStep(), 'h')
 
     fname = 'shops_{}.map'.format(self.currentTimeStep())
-    pset_report(self.foodstore.frontdoor.propensity, fname, sample_dir,'s')
+    pset_report(self.foodstore.frontdoor.propensity, fname, sample_dir, self.currentTimeStep(), 's')
 
 
 
