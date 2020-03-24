@@ -41,7 +41,7 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
 
 
     locations = Points()
-    locations.read('houses_locs_utr.csv')
+    locations.read('house_locs_utr.csv')
 
 
 
