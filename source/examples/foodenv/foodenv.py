@@ -58,17 +58,22 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
     self.household.frontdoor.add_property('beta')
     self.household.frontdoor.add_property('gamma')
     self.household.frontdoor.add_property('buffersize')
-    self.household.frontdoor.add_property('neighbours')
+    self.household.frontdoor.add_property('social_neighbours')
+
+    # Temporary way to decreaser runtime.
+    # Calculate once as we assume no changes over time
+    self.household.frontdoor.add_property('neighboured_foodstores')
 
     nr_objects = self.household.nr_objects
     self.household.frontdoor.alpha.values = 0.15
     self.household.frontdoor.beta.values = 0.5
-    self.household.frontdoor.gamma.values = 0.5
+    self.household.frontdoor.gamma.values = 0.0#5
     self.household.frontdoor.buffersize.values = 500
     self.household.frontdoor.propensity.values = -0.17 # numpy.random.uniform(-1, 1, (nr_objects))
     self.household.frontdoor.default_propensity.values = 0.4
 
-    self.household.frontdoor.neighbours.values = neighbour_network(nr_objects, 40, 0.1, seed)
+    self.household.frontdoor.social_neighbours.values = neighbour_network(nr_objects, 40, 0.1, seed)
+
 
 
 
@@ -89,7 +94,9 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
     self.foodstore.frontdoor.add_property('delta')
 
 
-    self.foodstore.frontdoor.propensity.values = numpy.random.uniform(-1, 1, (nr_objects))
+
+
+    self.foodstore.frontdoor.propensity.values = -0.17 #numpy.random.uniform(-1, 1, (nr_objects))
     self.foodstore.frontdoor.buffersize.values = 500
     self.foodstore.frontdoor.delta = 0.2
 
@@ -101,6 +108,14 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
     self.foodstore.surrounding.add_property('randomfield')
     self.foodstore.surrounding.randomfield.values = numpy.random.uniform(-1, 1, (nr_objects, 2, 2))
 
+
+    # Temporary way to decreaser runtime.
+    # Calculate once as we assume no changes over time
+    self.foodstore.frontdoor.add_property('neighboured_houses')
+
+    # Assign spatial neighbours
+    self.household.frontdoor.neighboured_foodstores.values = get_others(self.household.frontdoor.domain, self.foodstore.frontdoor.domain, self.household.frontdoor.buffersize)
+    self.foodstore.frontdoor.neighboured_houses.values = get_others(self.foodstore.frontdoor.domain, self.household.frontdoor.domain, self.foodstore.frontdoor.buffersize)
 
     self.timestep = 0.5
 
@@ -118,13 +133,16 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
     total_average = property_average(tmp_averages)
 
     # Averages of neighbours in buffer
-    neighboured_store_prop = focal_average_others(self.household.frontdoor.domain, self.foodstore.frontdoor.domain, self.foodstore.frontdoor.propensity, self.household.frontdoor.buffersize, total_average, self.household.frontdoor.propensity)
+    #neighboured_store_prop = focal_average_others(self.household.frontdoor.domain, self.foodstore.frontdoor.domain, self.foodstore.frontdoor.propensity, self.household.frontdoor.buffersize, total_average, self.household.frontdoor.propensity)
+
+    neighboured_store_prop = network_average_def(self.household.frontdoor.neighboured_foodstores, self.foodstore.frontdoor.propensity, total_average)
+
 
 
     term2 =  self.household.frontdoor.beta * (neighboured_store_prop * (1.0 - abs(self.household.frontdoor.propensity)))
 
     # Social network
-    social_neighbours_prop = network_average(self.household.frontdoor.neighbours, self.household.frontdoor.propensity, os.path.join(str(self.currentSampleNumber()), 'nw_{}.txt'.format(self.currentTimeStep())))
+    social_neighbours_prop = network_average(self.household.frontdoor.social_neighbours, self.household.frontdoor.propensity, os.path.join(str(self.currentSampleNumber()), 'nw_{}.txt'.format(self.currentTimeStep())))
     term3 =  self.household.frontdoor.gamma * (social_neighbours_prop * (1.0 - abs(self.household.frontdoor.propensity)))
 
 
@@ -134,7 +152,10 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
     # Foodstores
     total_average = property_average(average(self.household.frontdoor.propensity))
 
-    neighboured_houses_prop = focal_average_others(self.foodstore.frontdoor.domain, self.household.frontdoor.domain, self.household.frontdoor.propensity, self.foodstore.frontdoor.buffersize, total_average, self.foodstore.frontdoor.propensity)
+    #neighboured_houses_prop = focal_average_others(self.foodstore.frontdoor.domain, self.household.frontdoor.domain, self.household.frontdoor.propensity, self.foodstore.frontdoor.buffersize, total_average, self.foodstore.frontdoor.propensity)
+
+    neighboured_houses_prop = network_average_def(self.foodstore.frontdoor.neighboured_houses, self.household.frontdoor.propensity, total_average)
+
 
     self.foodstore.frontdoor.propensity += self.foodstore.frontdoor.delta * self.timestep * (neighboured_houses_prop - self.foodstore.frontdoor.propensity)
 

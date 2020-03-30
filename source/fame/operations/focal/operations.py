@@ -1,4 +1,5 @@
 import copy
+import numpy
 
 from osgeo import gdal
 from osgeo import ogr
@@ -6,6 +7,67 @@ from osgeo import osr
 
 
 
+
+
+def get_others(start_prop, dest_prop, buffer_size):
+
+  values = numpy.zeros((len(start_prop),len(dest_prop)), dtype=numpy.int8)
+
+  spatial_ref = osr.SpatialReference()
+  spatial_ref.ImportFromEPSG(28992)
+
+  memdriver = ogr.GetDriverByName('MEMORY')
+  ds = memdriver.CreateDataSource('tmp.gpkg')
+
+
+  # Destination layer
+  lyr_dest = ds.CreateLayer('uid', geom_type=ogr.wkbPoint, srs=spatial_ref)
+  field = ogr.FieldDefn('uid', ogr.OFTInteger)
+  lyr_dest.CreateField(field)
+
+
+  # Plain storing of object order (id)
+  for idx, p in enumerate(dest_prop):
+   # print(idx)
+    point = ogr.Geometry(ogr.wkbPoint)
+
+    point.AddPoint(p[0], p[1])
+    feat = ogr.Feature(lyr_dest.GetLayerDefn())
+    feat.SetGeometry(point)
+
+    feat.SetField('uid', idx)
+
+    lyr_dest.CreateFeature(feat)
+
+
+  lyr_dest = None
+  lyr_dest = ds.GetLayer('uid')
+
+
+  for idx, p in enumerate(start_prop): #.pset_domain:
+
+    lyr_shop = ds.CreateLayer('destination_locations', geom_type=ogr.wkbPoint, srs=spatial_ref)
+    # just a round buffer
+    lyr_dist = ds.CreateLayer('source_buffer', geom_type=ogr.wkbPolygon, srs=spatial_ref)
+    point = ogr.Geometry(ogr.wkbPoint)
+    point.AddPoint(p[0], p[1])
+    poly = point.Buffer(float(buffer_size.values[idx]))
+    feat = ogr.Feature(lyr_dist.GetLayerDefn())
+    feat.SetGeometry(poly)
+    lyr_dist.CreateFeature(feat)
+
+
+    lyr_dest.SetSpatialFilter(poly)
+
+    lyr_dest.Clip(lyr_dist, lyr_shop, options=['SKIP_FAILURES=NO'])
+
+    for target in lyr_shop:
+
+        uid = target.GetField('uid')
+        values[idx, uid] = 1
+
+
+  return values
 
 
 

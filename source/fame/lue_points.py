@@ -51,15 +51,24 @@ class Points(object):
 
       self.nr_items = len(content)
 
-      x = numpy.zeros(self.nr_items)
-      y = numpy.zeros(self.nr_items)
+      #x = numpy.zeros(self.nr_items)
+      #y = numpy.zeros(self.nr_items)
 
+      #for idx, item in enumerate(content):
+        #x[idx] = item[0]
+        #y[idx] = item[1]
+
+      #self.xcoord = x
+      #self.ycoord = y
+
+      v = numpy.zeros((self.nr_items,2))
       for idx, item in enumerate(content):
-        x[idx] = item[0]
-        y[idx] = item[1]
+        v[idx,0] = item[0]
+        v[idx,1] = item[1]
+      numpy.random.shuffle(v)
 
-      self.xcoord = x
-      self.ycoord = y
+      self.xcoord = v[:,0]
+      self.ycoord = v[:,1]
 
 
 
