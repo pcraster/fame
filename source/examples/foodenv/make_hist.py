@@ -60,7 +60,7 @@ def generate_histogram(directory, filename, roundy):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser = argparse.ArgumentParser(description='Generate histogram.')
     parser.add_argument('directory', type=str, help='Directory ')
     parser.add_argument('filename', type=str, help='Filename prefix to process')
     parser.add_argument('--roundy', type=int, default=100, help='Round up to multiple of')

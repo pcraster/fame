@@ -46,7 +46,7 @@ def generate_heatmap(directory, filename):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser = argparse.ArgumentParser(description='Generate heatmap.')
     parser.add_argument('directory', type=str, help='Directory ')
     parser.add_argument('filename', type=str, help='Filename prefix to process')
 
