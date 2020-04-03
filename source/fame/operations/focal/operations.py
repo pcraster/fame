@@ -28,7 +28,6 @@ def get_others(start_prop, dest_prop, buffer_size):
 
   # Plain storing of object order (id)
   for idx, p in enumerate(dest_prop):
-   # print(idx)
     point = ogr.Geometry(ogr.wkbPoint)
 
     point.AddPoint(p[0], p[1])

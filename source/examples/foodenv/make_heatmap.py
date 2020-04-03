@@ -34,7 +34,7 @@ def generate_heatmap(directory, filename):
     aspect = 'auto'
 
     cmap = 'RdYlGn'
-    plt.imshow(a, cmap=cmap, interpolation='none', aspect=aspect)
+    plt.imshow(a, cmap=cmap, interpolation='none', aspect=aspect, vmin=-1, vmax=1)
 
     plt.colorbar(orientation='horizontal')
 
