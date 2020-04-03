@@ -20,6 +20,8 @@ class Property(object):
         self._shape = None
         self._dtype = None
 
+        self.nr_objects = self._pset
+
 
 
     @property

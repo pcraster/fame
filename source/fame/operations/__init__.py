@@ -8,6 +8,7 @@
 
 
 from .operations import *
+from .local.operations import *
 from .focal.operations import *
 
 from .network.lm_network import *

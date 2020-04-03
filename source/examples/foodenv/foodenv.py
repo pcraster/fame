@@ -67,10 +67,13 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
     nr_objects = self.household.nr_objects
     self.household.frontdoor.alpha.values = 0.15
     self.household.frontdoor.beta.values = 0.5
-    self.household.frontdoor.gamma.values = 0.0#5
+    self.household.frontdoor.gamma.values = 0.0
     self.household.frontdoor.buffersize.values = 500
-    self.household.frontdoor.propensity.values = -0.17 # numpy.random.uniform(-1, 1, (nr_objects))
     self.household.frontdoor.default_propensity.values = 0.4
+
+    lower = -0.18344355629253628
+    upper = -0.16344355629253626
+    self.household.frontdoor.propensity.values = uniform(self.household.frontdoor, lower, upper)
 
     self.household.frontdoor.social_neighbours.values = neighbour_network(nr_objects, 40, 0.1, seed)
 
@@ -96,7 +99,7 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
 
 
 
-    self.foodstore.frontdoor.propensity.values = -0.17 #numpy.random.uniform(-1, 1, (nr_objects))
+    self.foodstore.frontdoor.propensity.values = uniform(self.foodstore.frontdoor, lower, upper)
     self.foodstore.frontdoor.buffersize.values = 500
     self.foodstore.frontdoor.delta = 0.2
 

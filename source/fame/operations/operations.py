@@ -145,10 +145,6 @@ def lue_iadd(self, prop):
 
 
 
-def uniform(self, lower, upper):
-
-
-  pass
 
 
 def lue_neg(self):
