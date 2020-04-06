@@ -7,6 +7,7 @@ import sys
 sys.path.insert(0, os.path.abspath('../../'))
 from fame import *
 
+import fame
 
 seed = 1
 setrandomseed(seed)
@@ -35,12 +36,13 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
 
   def initial(self):
 
+    self.luemem = LueMemory(self.nrTimeSteps())
+
     dataset_name = os.path.join(str(self.currentSampleNumber()), 'food_consumption_{}'.format(self.currentSampleNumber()))
-
-    self.luemem = LueMemory(dataset_name, self.nrTimeSteps())
-
+    self.luemem.open(dataset_name)
 
     locations = Points()
+    # locations.read('house_locs_utr.csv')
     locations.read('h.csv')
 
 
@@ -48,9 +50,7 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
     # Houses, 1d agents fttb
     self.household = self.luemem.add_phenomenon('household', locations.nr_items)
 
-
-    self.household.add_property_set('frontdoor')
-    self.household.frontdoor.set_space_domain('location', locations)
+    self.household.add_property_set('frontdoor', locations, fame.TimeDomain.dynamic)
 
     self.household.frontdoor.add_property('propensity')
     self.household.frontdoor.add_property('default_propensity')
@@ -89,8 +89,7 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
 
     nr_objects = locations.nr_items
 
-    self.foodstore.add_property_set('frontdoor')
-    self.foodstore.frontdoor.set_space_domain('location', locations)
+    self.foodstore.add_property_set('frontdoor', locations, fame.TimeDomain.dynamic)
 
     self.foodstore.frontdoor.add_property('propensity')
     self.foodstore.frontdoor.add_property('buffersize')
@@ -103,11 +102,11 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
     self.foodstore.frontdoor.buffersize.values = 500
     self.foodstore.frontdoor.delta = 0.2
 
-    self.foodstore.add_property_set('surrounding')
+
     areas = Areas()
     # areas.read('shops_areas.csv')
+    self.foodstore.add_property_set('surrounding', locations, fame.TimeDomain.dynamic)
 
-    self.foodstore.surrounding.set_space_domain('areas', areas)
     self.foodstore.surrounding.add_property('randomfield')
     self.foodstore.surrounding.randomfield.values = numpy.random.uniform(-1, 1, (nr_objects, 2, 2))
 

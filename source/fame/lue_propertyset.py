@@ -5,10 +5,9 @@ import fame.lue_property as lue_property
 
 
 
-
 class PropertySet(object):
 
-    def __init__(self, phen):
+    def __init__(self, phen, space_domain=None, time_domain=None):
 
       self._phen = phen
 
@@ -18,6 +17,18 @@ class PropertySet(object):
 
       self._domain = None
 
+      self._space_domain = space_domain
+      self._time_domain = time_domain
+
+
+    @property
+    def space_domain(self):
+      return self.space_domain
+
+
+    @property
+    def time_domain(self):
+      return self.time_domain
 
     @property
     def domain(self):

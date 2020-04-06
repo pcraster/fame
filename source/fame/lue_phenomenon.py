@@ -1,8 +1,14 @@
+import enum
 import os
 
 from .lue_propertyset import *
 
 
+
+class TimeDomain(enum.Enum):
+  """ Class to indicate time domain of a property set """
+  static = 1
+  dynamic = 2
 
 
 
@@ -15,6 +21,7 @@ class Phenomenon(object):
 
         self.working_dir = working_dir
         self._nr_objects = nr_objects
+
 
 
 
@@ -35,15 +42,26 @@ class Phenomenon(object):
 
 
 
-    def add_property_set(self, value):
+    def add_property_set(self, value, space_domain=None, time_domain=None):
+      assert isinstance(time_domain, TimeDomain)
+
       assert isinstance(value, str)
 
-      p = PropertySet(self._nr_objects) #self)
+      self._space_domain = space_domain
+      self._time_domain = time_domain
+
+      p = PropertySet(self._nr_objects)
       p.__name__ = value
+      p.set_space_domain('locationdfg', space_domain)
       self._property_sets.add(p)
+
+
 
 
     @property
     def nr_objects(self):
       return self._nr_objects
 
+    @property
+    def time_domain(self):
+      return self._time_domain

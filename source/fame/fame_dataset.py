@@ -1,17 +1,24 @@
 import os
 
+try:
+  import lue
+except ModuleNotFoundError as e:
+  print(e)
+  msg = 'You can try to install the current development version like:\n'
+  msg += 'conda install -c conda-forge -c http://pcraster.geo.uu.nl/pcraster/pcraster/ lue'
+  raise SystemExit(msg)
 
 from .lue_phenomenon import *
 
 
 class LueMemory(object):
 
-    def __init__(self, filename, last_timestep, first_timestep=1, working_dir=os.getcwd()):
+    def __init__(self, last_timestep, first_timestep=1):
 
-      self.filename = filename
+      self.lue_filname = None
+      self.lue_dataset = None
 
 
-      self.working_dir = working_dir
 
       self._phenomena = set()
 
@@ -52,3 +59,19 @@ class LueMemory(object):
     def __repr__(self):
       msg = 'Simulation with phenomena "{}"'.format(self._phenomena)
       return msg
+
+
+    def open(self, filename, working_dir=os.getcwd()):
+      fpath = os.path.join(working_dir, filename)
+
+      root, ext = os.path.splitext(fpath)
+      if ext == '':
+        fpath += '.lue'
+
+      if os.path.exists(filename):
+        raise NotImplementedError('opening existing not yet supported')
+
+      self.lue_filename = fpath
+      self.lue_dataset = lue.create_dataset(self.lue_filename)
+
+      assert lue.validate(self.lue_filename)
