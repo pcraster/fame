@@ -181,7 +181,7 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
 
 
 
-timesteps = 200
+timesteps = 20
 samples = 2
 
 myModel = FoodConsumption()

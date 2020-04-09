@@ -43,14 +43,22 @@ class LueMemory(object):
 
 
 
-    def add_phenomenon(self, value, nr_objects):
+    def add_phenomenon(self, phen_name, nr_objects):
 
-      if not isinstance(value, str):
+      # FAME
+      if not isinstance(phen_name, str):
         raise NotImplementedError
 
       p = Phenomenon(nr_objects)
-      p.__name__ = value
+      p.__name__ = phen_name
       self._phenomena.add(p)
+
+      # LUE
+      self.lue_dataset.add_phenomenon(phen_name)
+      tmp = self.lue_dataset.phenomena[phen_name]
+      tmp.object_id.expand(p.nr_objects)[:] = p.object_ids
+
+      assert lue.validate(self.lue_filename)
 
       return p
 

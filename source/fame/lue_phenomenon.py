@@ -1,4 +1,5 @@
 import enum
+import numpy
 import os
 
 from .lue_propertyset import *
@@ -21,6 +22,11 @@ class Phenomenon(object):
 
         self.working_dir = working_dir
         self._nr_objects = nr_objects
+
+        # Plain list of object IDs
+        self._object_ids = numpy.arange(self._nr_objects)
+
+
 
 
 
@@ -65,3 +71,8 @@ class Phenomenon(object):
     @property
     def time_domain(self):
       return self._time_domain
+
+    @property
+    def object_ids(self):
+      return self._object_ids
+
