@@ -5,7 +5,7 @@ import fame.lue_points as lue_points
 
 class Areas(object):
 
-  def __init__(self):
+  def __init__(self, mobile=False):
 
     self.iter_idx = 0
 
@@ -29,9 +29,13 @@ class Areas(object):
     self.col_discr = None
 
 
+    self._mobile = mobile
 
 
 
+  @property
+  def mobile(self):
+    return self._mobile
 
 
   @property
