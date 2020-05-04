@@ -1,3 +1,7 @@
+import numpy
+
+import lue
+
 import fame.lue_points as lue_points
 import fame.lue_areas as lue_areas
 import fame.lue_property as lue_property
@@ -9,6 +13,8 @@ class PropertySet(object):
 
     def __init__(self, phen, space_domain=None, time_domain=None):
 
+      self._lue_dataset_name = None
+      self._lue_phenomenon_name = None
       self._phen = phen
 
       self._properties = set()
@@ -35,7 +41,7 @@ class PropertySet(object):
       return self._domain
 
 
-    def _nr_objects(self):
+    def nr_objects(self):
       return self._phen
 
 
@@ -50,9 +56,8 @@ class PropertySet(object):
     def __getattr__(self, property_name):
       result = None
       for p in self._properties:
-        if p.__name__ == property_name:
+        if p.name == property_name:
           result = p
-
 
       return result
 
@@ -77,12 +82,71 @@ class PropertySet(object):
         p.pset_domain = self._domain
 
 
-    def add_property(self, value):
+    def add_property(self, property_name, dtype=numpy.float64):
 
-      assert isinstance(value, str)
+      assert isinstance(property_name, str)
+      assert self._lue_dataset_name is not None
 
+      # FAME
       p = lue_property.Property(self._phen)
-      p.__name__ = value
+      p.name = property_name
       p.pset_domain = self._domain
 
+      p._lue_pset_name = self.__name__
+
       self._properties.add(p)
+
+      # LUE
+
+      time_domain = self._lue_dataset.phenomena[self._lue_phenomenon_name].property_sets['fame_time_extent'].time_domain
+      nr_timesteps = 100
+
+      pset = self._lue_dataset.phenomena[self._lue_phenomenon_name].property_sets[self.__name__]
+      prop = pset.add_property(property_name, dtype=numpy.dtype(dtype), shape=(1, self.nr_objects()))
+
+      prop.value.expand(nr_timesteps)#[:] = numpy.zeros((self.nr_objects(), self.nr_objects()))
+
+      assert lue.validate(self._lue_dataset_name)
+
+
+
+    def write(self, timestep):
+
+        timestep -= 1
+        print('\n\n***write***')
+
+        print(self._lue_dataset) # = None
+        print(self._lue_phen_name)# = None
+        print(self._lue_pset_name)# = None
+        print(self._lue_phenomenon_name)
+        print(self.__name__)
+        print(self._lue_dataset)
+        #print(property_name)
+
+        lue_pset = self._lue_dataset.phenomena[self._lue_phenomenon_name].property_sets[self.__name__]
+
+        for prop in self._properties:
+          if prop.name != 'neighboured_houses' and prop.name != 'neighboured_foodstores':
+
+              print()
+              print()
+              print(type(prop))
+              print(prop.name)
+
+              lue_prop = lue_pset.properties[prop.name]
+              print(prop.values.values)
+              print(lue_prop.value)
+              print(type(lue_prop.value))
+              print(lue_prop.value.shape)
+
+              print(lue_prop.value[timestep])
+              #raise SystemExit
+              lue_prop.value[timestep] = prop.values.values
+              print(lue_prop.value[timestep])
+
+
+              #raise SystemExit
+        assert lue.validate(self._lue_dataset_name)
+
+        #raise SystemExit
+

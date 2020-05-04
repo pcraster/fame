@@ -2,6 +2,7 @@ import numpy
 import datetime
 
 from pcraster.framework import *
+import pcraster as pcr
 
 import sys
 sys.path.insert(0, os.path.abspath('../../'))
@@ -23,6 +24,7 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
     # Framework requires a clone
     # set a dummy clone fttb
     setclone('houses.map')
+    setclone(6, 10, 1234.5, -987.6, 543.2)
     #
 
   def premcloop(self):
@@ -41,9 +43,10 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
     dataset_name = os.path.join(str(self.currentSampleNumber()), 'food_consumption_{}'.format(self.currentSampleNumber()))
     self.luemem.open(dataset_name)
 
-    locations = Points()
+    locations = Points(mobile=False)
     # locations.read('house_locs_utr.csv')
-    locations.read('h.csv')
+    #locations.read('h.csv')
+    locations.read('h5.csv')
 
 
 
@@ -58,13 +61,14 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
     self.household.frontdoor.add_property('beta')
     self.household.frontdoor.add_property('gamma')
     self.household.frontdoor.add_property('buffersize')
-    self.household.frontdoor.add_property('social_neighbours')
+    self.household.frontdoor.add_property('social_neighbours', dtype=numpy.int64)
 
     # Temporary way to decreaser runtime.
     # Calculate once as we assume no changes over time
-    self.household.frontdoor.add_property('neighboured_foodstores')
+    self.household.frontdoor.add_property('neighboured_foodstores', dtype=numpy.int16)
 
-    nr_objects = self.household.nr_objects
+    #nr_objects = self.household.nr_objects
+    #print(self.household.nr_objects)
     self.household.frontdoor.alpha.values = 0.15
     self.household.frontdoor.beta.values = 0.5
     self.household.frontdoor.gamma.values = 0.0
@@ -75,14 +79,16 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
     upper = -0.16344355629253626
     self.household.frontdoor.propensity.values = uniform(self.household.frontdoor, lower, upper)
 
-    self.household.frontdoor.social_neighbours.values = neighbour_network(nr_objects, 40, 0.1, seed)
+    #self.household.frontdoor.social_neighbours.values = neighbour_network(nr_objects, 40, 0.1, seed)
+    self.household.frontdoor.social_neighbours.values = neighbour_network(self.household.nr_objects, 2, 0.1, seed)
 
 
 
 
     # Food stores, 1d agents fttb
-    locations = Points()
-    locations.read('shops_locs.csv')
+    locations = Points(mobile=False)
+    #locations.read('shops_locs.csv')
+    locations.read('s8.csv')
 
     self.foodstore = self.luemem.add_phenomenon('foodstore', locations.nr_items)
 
@@ -100,7 +106,7 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
 
     self.foodstore.frontdoor.propensity.values = uniform(self.foodstore.frontdoor, lower, upper)
     self.foodstore.frontdoor.buffersize.values = 500
-    self.foodstore.frontdoor.delta = 0.2
+    self.foodstore.frontdoor.delta.values = 0.2
 
 
     areas = Areas()
@@ -120,6 +126,31 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
     self.foodstore.frontdoor.neighboured_houses.values = get_others(self.foodstore.frontdoor.domain, self.household.frontdoor.domain, self.foodstore.frontdoor.buffersize)
 
     self.timestep = 0.5
+
+
+    # Read the Utrecht map
+    #self.raster = pcr.readmap('houses.map')
+
+    # for testing we use a dummy raster
+    self.raster = 1000 + pcr.uniqueid(1)
+
+    # One raster object with house locations
+    self.aoi = self.luemem.add_phenomenon('extent', 1)
+
+    # Also add one raster holding the entire modelling area (municipality Utrecht) to the dataset
+    area = Areas()
+    areas.read('utrecht.csv')
+
+    self.aoi.add_property_set('utrecht', area, fame.TimeDomain.static)
+    self.aoi.utrecht.add_property('houses')
+
+    raster_np = pcr.pcr2numpy(self.raster, numpy.nan)
+    self.aoi.utrecht.houses.values = raster_np
+
+
+
+
+
 
 
   def dynamic(self):
@@ -159,7 +190,7 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
     neighboured_houses_prop = network_average_def(self.foodstore.frontdoor.neighboured_houses, self.household.frontdoor.propensity, total_average)
 
 
-    self.foodstore.frontdoor.propensity += self.foodstore.frontdoor.delta * self.timestep * (neighboured_houses_prop - self.foodstore.frontdoor.propensity)
+    self.foodstore.frontdoor.propensity += self.timestep * self.foodstore.frontdoor.delta  * (neighboured_houses_prop - self.foodstore.frontdoor.propensity)
 
 
 
@@ -177,12 +208,17 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
     pset_report(self.foodstore.frontdoor.propensity, fname, sample_dir, self.currentTimeStep(), 's')
 
 
+    #self.luemem.write(self.currentTimeStep(), self.foodstore.frontdoor.propensity)
+
+    self.household.frontdoor.write(self.currentTimeStep())
+
+    self.foodstore.frontdoor.write(self.currentTimeStep())
 
 
 
 
-timesteps = 20
-samples = 2
+timesteps = 100
+samples = 1
 
 myModel = FoodConsumption()
 dynFrw = DynamicFramework(myModel, timesteps)

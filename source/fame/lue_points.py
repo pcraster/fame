@@ -3,7 +3,7 @@ import numpy
 
 
 class Points(object):
-  def __init__(self):
+  def __init__(self, mobile=False):
 
     self.nr_items = None
 
@@ -14,8 +14,14 @@ class Points(object):
     self.xcoord = None
     self.ycoord = None
 
+    self._mobile = mobile
+
     self.iter_idx = 0
 
+
+  @property
+  def mobile(self):
+    return self._mobile
 
   @property
   def xcoord(self):

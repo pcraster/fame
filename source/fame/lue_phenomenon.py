@@ -2,7 +2,10 @@ import enum
 import numpy
 import os
 
+import lue
+
 from .lue_propertyset import *
+from .lue_points import Points
 
 
 
@@ -24,7 +27,11 @@ class Phenomenon(object):
         self._nr_objects = nr_objects
 
         # Plain list of object IDs
-        self._object_ids = numpy.arange(self._nr_objects)
+        self._object_ids = numpy.arange(self._nr_objects, dtype=lue.dtype.ID)
+
+        self._lue_dataset = None
+        self._lue_dataset_name = None
+        self._nr_timesteps = None
 
 
 
@@ -48,19 +55,48 @@ class Phenomenon(object):
 
 
 
-    def add_property_set(self, value, space_domain=None, time_domain=None):
+    def add_property_set(self, pset_name, space_domain=None, time_domain=None):
       assert isinstance(time_domain, TimeDomain)
 
-      assert isinstance(value, str)
+      assert isinstance(pset_name, str)
 
+      if space_domain is not None:
+        space_type = None
+        if isinstance(space_domain,lue_points.Points):
+          space_type = lue.SpaceDomainItemType.point
+        else:
+          space_type = lue.SpaceDomainItemType.box
+
+        if not space_domain.mobile:
+          space_configuration = lue.SpaceConfiguration(
+          lue.Mobility.stationary,
+          space_type
+          )
+        else:
+          raise NotImplementedError
+
+
+      # FAME
       self._space_domain = space_domain
       self._time_domain = time_domain
 
       p = PropertySet(self._nr_objects)
-      p.__name__ = value
+      p.__name__ = pset_name
+      p._lue_dataset_name = self._lue_dataset_name
+      p._lue_dataset = self._lue_dataset
+      p._lue_phenomenon_name = self.__name__
       p.set_space_domain('locationdfg', space_domain)
       self._property_sets.add(p)
 
+      # LUE
+
+      time_domain = self._lue_dataset.phenomena[self.__name__].property_sets['fame_time_extent'].time_domain
+
+      #self._lue_dataset.phenomena[self.__name__].add_property_set(pset_name, time_domain.configuration, time_domain.clock)
+
+      tmp_pset = self._lue_dataset.phenomena[self.__name__].add_property_set(pset_name, time_domain, space_configuration, numpy.dtype(numpy.float32), rank=1)
+
+      assert lue.validate(self._lue_dataset_name)
 
 
 

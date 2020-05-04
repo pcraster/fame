@@ -15,8 +15,11 @@ class LueMemory(object):
 
     def __init__(self, last_timestep, first_timestep=1):
 
-      self.lue_filname = None
+      self.lue_filename = None
       self.lue_dataset = None
+      #self.lue_epoch = None
+      self._lue_clock = None
+      self.lue_time_extent = None
 
 
 
@@ -29,6 +32,19 @@ class LueMemory(object):
       self._nr_timesteps = None
 
       self._set_timesteps(first_timestep, last_timestep)
+
+
+
+      if self._nr_timesteps > 1:
+          epoch = lue.Epoch(lue.Epoch.Kind.common_era)
+
+          self._lue_clock = lue.Clock(epoch, lue.Unit.day, self._nr_timesteps)
+      else:
+        raise NotImplementedError
+
+    @property
+    def lue_clock(self):
+      return self._lue_clock
 
     def _set_timesteps(self, first_timestep, last_timestep):
       assert first_timestep > 0
@@ -51,12 +67,20 @@ class LueMemory(object):
 
       p = Phenomenon(nr_objects)
       p.__name__ = phen_name
+      p._lue_dataset = self.lue_dataset
+      p._lue_dataset_name = self.lue_filename
+      p._nr_timesteps = self._nr_timesteps
       self._phenomena.add(p)
 
       # LUE
       self.lue_dataset.add_phenomenon(phen_name)
       tmp = self.lue_dataset.phenomena[phen_name]
       tmp.object_id.expand(p.nr_objects)[:] = p.object_ids
+
+      self.lue_time_extent = tmp.add_property_set(
+              "fame_time_extent",
+              lue.TimeConfiguration(lue.TimeDomainItemType.cell), self.lue_clock)
+
 
       assert lue.validate(self.lue_filename)
 
@@ -83,3 +107,7 @@ class LueMemory(object):
       self.lue_dataset = lue.create_dataset(self.lue_filename)
 
       assert lue.validate(self.lue_filename)
+
+
+
+

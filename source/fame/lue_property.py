@@ -1,6 +1,7 @@
 import numbers
 import os
 import numpy
+#import copy
 
 from .luemem_values import *
 
@@ -22,6 +23,9 @@ class Property(object):
 
         self.nr_objects = self._pset
 
+        self._lue_dataset  = None
+        self._lue_phen_name = None
+        self._lue_pset_name = None
 
 
     @property
@@ -98,4 +102,3 @@ class Property(object):
     def __repr__(self):
       #print(self._values)
       return ''
-

@@ -10,6 +10,6 @@ def uniform(pset, lower=0.0, upper=1.0):
     raise NotImplementedError
 
   tmp_prop = fame.lue_property.Property(pset._phen)
-  tmp_prop.values = numpy.random.uniform(lower, upper, (pset._nr_objects(),))
+  tmp_prop.values = numpy.random.uniform(lower, upper, (pset.nr_objects(),))
 
-  return numpy.random.uniform(lower, upper, (pset._nr_objects(),))
+  return numpy.random.uniform(lower, upper, (pset.nr_objects(),))
