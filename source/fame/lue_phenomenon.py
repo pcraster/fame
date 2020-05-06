@@ -60,12 +60,16 @@ class Phenomenon(object):
 
       assert isinstance(pset_name, str)
 
+      rank = None
+      space_type = None
+
       if space_domain is not None:
-        space_type = None
         if isinstance(space_domain,lue_points.Points):
           space_type = lue.SpaceDomainItemType.point
+          rank = 2
         else:
           space_type = lue.SpaceDomainItemType.box
+          rank = 2
 
         if not space_domain.mobile:
           space_configuration = lue.SpaceConfiguration(
@@ -74,6 +78,7 @@ class Phenomenon(object):
           )
         else:
           raise NotImplementedError
+
 
 
       # FAME
@@ -94,7 +99,55 @@ class Phenomenon(object):
 
       #self._lue_dataset.phenomena[self.__name__].add_property_set(pset_name, time_domain.configuration, time_domain.clock)
 
-      tmp_pset = self._lue_dataset.phenomena[self.__name__].add_property_set(pset_name, time_domain, space_configuration, numpy.dtype(numpy.float32), rank=1)
+      tmp_pset = self._lue_dataset.phenomena[self.__name__].add_property_set(pset_name, time_domain, space_configuration, numpy.dtype(numpy.float64), rank=rank)
+
+
+      # Assign coordinates
+      if space_type == lue.SpaceDomainItemType.point:
+
+        tmp_location = self._lue_dataset.phenomena[self.__name__].property_sets[pset_name]
+
+        # Index of active set (we only use one...)
+        tmp_location.object_tracker.active_set_index.expand(1)[-1] = 0
+
+        # IDs of the active objects of current time cell.
+        tmp_location.object_tracker.active_object_id.expand(self._nr_objects)[-self._nr_objects:] = self._object_ids
+
+        space_coordinate_dtype = tmp_location.space_domain.value.dtype
+
+        tmp_values = numpy.zeros((self._nr_objects, 2), dtype=tmp_location.space_domain.value.dtype)
+
+        for idx, item in enumerate(space_domain):
+          tmp_values[idx, 0] = item[0]
+          tmp_values[idx, 1] = item[1]
+
+        tmp_location.space_domain.value.expand(self._nr_objects)[-self._nr_objects:] = tmp_values
+
+
+      elif space_type == lue.SpaceDomainItemType.box:
+
+        tmp_location = self._lue_dataset.phenomena[self.__name__].property_sets[pset_name]
+
+        # Index of active set (we only use one...)
+        tmp_location.object_tracker.active_set_index.expand(1)[-1] = 0
+
+        # IDs of the active objects of current time cell.
+        tmp_location.object_tracker.active_object_id.expand(self._nr_objects)[-self._nr_objects:] = self._object_ids
+
+        space_coordinate_dtype = tmp_location.space_domain.value.dtype
+
+        tmp_values = numpy.zeros((self._nr_objects, 4), dtype=tmp_location.space_domain.value.dtype)
+
+        for idx, item in enumerate(space_domain):
+          tmp_values[idx, 0] = item[0]
+          tmp_values[idx, 1] = item[1]
+          tmp_values[idx, 2] = item[2]
+          tmp_values[idx, 3] = item[3]
+
+        tmp_location.space_domain.value.expand(self._nr_objects)[-self._nr_objects:] = tmp_values
+
+      else:
+        raise NotImplementedError
 
       assert lue.validate(self._lue_dataset_name)
 

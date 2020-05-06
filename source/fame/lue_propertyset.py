@@ -110,16 +110,22 @@ class PropertySet(object):
 
 
 
-    def write(self, timestep):
+    def write(self, timestep=None):
 
-        timestep -= 1
-        lue_pset = self._lue_dataset.phenomena[self._lue_phenomenon_name].property_sets[self.__name__]
+        if timestep is not None:
+          timestep -= 1
+          lue_pset = self._lue_dataset.phenomena[self._lue_phenomenon_name].property_sets[self.__name__]
 
-        for prop in self._properties:
-          if prop.name != 'neighboured_houses' and prop.name != 'neighboured_foodstores':
+          for prop in self._properties:
+            if prop.name != 'neighboured_houses' and prop.name != 'neighboured_foodstores':
 
-              lue_prop = lue_pset.properties[prop.name]
+                lue_prop = lue_pset.properties[prop.name]
+
+        else:
+          # in initial...
+          pass
 
         assert lue.validate(self._lue_dataset_name)
+
 
 

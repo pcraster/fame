@@ -110,11 +110,11 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
 
 
     areas = Areas()
-    # areas.read('shops_areas.csv')
-    self.foodstore.add_property_set('surrounding', locations, fame.TimeDomain.dynamic)
+    areas.read('shops_extent.csv')
+    self.foodstore.add_property_set('surrounding', areas, fame.TimeDomain.static)
 
-    self.foodstore.surrounding.add_property('randomfield')
-    self.foodstore.surrounding.randomfield.values = numpy.random.uniform(-1, 1, (nr_objects, 2, 2))
+    #self.foodstore.surrounding.add_property('randomfield')
+    #self.foodstore.surrounding.randomfield.values = numpy.random.uniform(-1, 1, (nr_objects, 2, 2))
 
 
     # Temporary way to decreaser runtime.
@@ -129,27 +129,29 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
 
 
     # Read the Utrecht map
-    #self.raster = pcr.readmap('houses.map')
 
     # for testing we use a dummy raster
     self.raster = 1000 + pcr.uniqueid(1)
+    self.report(self.raster, 'tmp_raster')
 
     # One raster object with house locations
     self.aoi = self.luemem.add_phenomenon('extent', 1)
 
     # Also add one raster holding the entire modelling area (municipality Utrecht) to the dataset
     area = Areas()
-    areas.read('utrecht.csv')
+    area.read('utrecht.csv')
 
     self.aoi.add_property_set('utrecht', area, fame.TimeDomain.static)
     self.aoi.utrecht.add_property('houses')
 
-    raster_np = pcr.pcr2numpy(self.raster, numpy.nan)
-    self.aoi.utrecht.houses.values = raster_np
+    # self.raster = pcr.readmap('houses.map')
+    # raster_np = pcr.pcr2numpy(self.raster, numpy.nan)
+    # self.aoi.utrecht.houses.values = raster_np
+
+    self.aoi.utrecht.write()
 
 
-
-
+    raise SystemExit
 
 
 
@@ -199,16 +201,13 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
 
 
     # We plainly write to PCRaster maps for simplicity of (timeseries) display
-    sample_dir = str(self.currentSampleNumber())
+    # sample_dir = str(self.currentSampleNumber())
 
-    fname = 'houses_{}.map'.format(self.currentTimeStep())
-    pset_report(self.household.frontdoor.propensity, fname, sample_dir, self.currentTimeStep(), 'h')
+    # fname = 'houses_{}.map'.format(self.currentTimeStep())
+    # pset_report(self.household.frontdoor.propensity, fname, sample_dir, self.currentTimeStep(), 'h')
 
-    fname = 'shops_{}.map'.format(self.currentTimeStep())
-    pset_report(self.foodstore.frontdoor.propensity, fname, sample_dir, self.currentTimeStep(), 's')
-
-
-    #self.luemem.write(self.currentTimeStep(), self.foodstore.frontdoor.propensity)
+    # fname = 'shops_{}.map'.format(self.currentTimeStep())
+    # pset_report(self.foodstore.frontdoor.propensity, fname, sample_dir, self.currentTimeStep(), 's')
 
     self.household.frontdoor.write(self.currentTimeStep())
 
@@ -217,7 +216,7 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
 
 
 
-timesteps = 100
+timesteps = 15
 samples = 1
 
 myModel = FoodConsumption()
