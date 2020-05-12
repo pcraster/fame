@@ -55,15 +55,18 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
 
     self.household.add_property_set('frontdoor', locations, fame.TimeDomain.dynamic)
 
+    # Propensity will be changed and written per time step (default situation)
     self.household.frontdoor.add_property('propensity')
-    self.household.frontdoor.add_property('default_propensity')
-    self.household.frontdoor.add_property('alpha')
-    self.household.frontdoor.add_property('beta')
-    self.household.frontdoor.add_property('gamma')
-    self.household.frontdoor.add_property('buffersize')
+
+    # These properties will be constant over time and stored once
+    self.household.frontdoor.add_property('default_propensity', time_discretisation=fame.TimeDiscretization.static)
+    self.household.frontdoor.add_property('alpha', time_discretisation=fame.TimeDiscretization.static)
+    self.household.frontdoor.add_property('beta', time_discretisation=fame.TimeDiscretization.static)
+    self.household.frontdoor.add_property('gamma', time_discretisation=fame.TimeDiscretization.static)
+    self.household.frontdoor.add_property('buffersize', time_discretisation=fame.TimeDiscretization.static)
     self.household.frontdoor.add_property('social_neighbours', dtype=numpy.int64)
 
-    # Temporary way to decreaser runtime.
+    # Temporary way to decrease runtime.
     # Calculate once as we assume no changes over time
     self.household.frontdoor.add_property('neighboured_foodstores', dtype=numpy.int16)
 
@@ -151,7 +154,7 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
     self.aoi.utrecht.write()
 
 
-    raise SystemExit
+    #raise SystemExit
 
 
 

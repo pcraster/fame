@@ -1,18 +1,15 @@
-import enum
 import numpy
 import os
 
 import lue
 
-from .lue_propertyset import *
+
+import fame.lue_points as lue_points
+import fame.lue_propertyset as fame_pset
 from .lue_points import Points
 
+from .fame_utils import TimeDomain
 
-
-class TimeDomain(enum.Enum):
-  """ Class to indicate time domain of a property set """
-  static = 1
-  dynamic = 2
 
 
 
@@ -56,6 +53,7 @@ class Phenomenon(object):
 
 
     def add_property_set(self, pset_name, space_domain=None, time_domain=None):
+      """ Adding a property set """
       assert isinstance(time_domain, TimeDomain)
 
       assert isinstance(pset_name, str)
@@ -64,7 +62,7 @@ class Phenomenon(object):
       space_type = None
 
       if space_domain is not None:
-        if isinstance(space_domain,lue_points.Points):
+        if isinstance(space_domain, lue_points.Points):
           space_type = lue.SpaceDomainItemType.point
           rank = 2
         else:
@@ -85,7 +83,7 @@ class Phenomenon(object):
       self._space_domain = space_domain
       self._time_domain = time_domain
 
-      p = PropertySet(self._nr_objects)
+      p = fame_pset.PropertySet(self._nr_objects)
       p.__name__ = pset_name
       p._lue_dataset_name = self._lue_dataset_name
       p._lue_dataset = self._lue_dataset

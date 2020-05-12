@@ -8,12 +8,18 @@ except ModuleNotFoundError as e:
   msg += 'conda install -c conda-forge -c http://pcraster.geo.uu.nl/pcraster/pcraster/ lue'
   raise SystemExit(msg)
 
-from .lue_phenomenon import *
+import fame.lue_phenomenon as fame_phen
+
+
+
+
+
 
 
 class LueMemory(object):
 
     def __init__(self, last_timestep, first_timestep=1):
+      """ some text """
 
       self.lue_filename = None
       self.lue_dataset = None
@@ -60,12 +66,13 @@ class LueMemory(object):
 
 
     def add_phenomenon(self, phen_name, nr_objects):
+      """ Adding a phenomenon """
 
       # FAME
       if not isinstance(phen_name, str):
         raise NotImplementedError
 
-      p = Phenomenon(nr_objects)
+      p = fame_phen.Phenomenon(nr_objects)
       p.__name__ = phen_name
       p._lue_dataset = self.lue_dataset
       p._lue_dataset_name = self.lue_filename

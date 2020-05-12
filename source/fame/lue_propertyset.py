@@ -2,10 +2,13 @@ import numpy
 
 import lue
 
+
 import fame.lue_points as lue_points
 import fame.lue_areas as lue_areas
 import fame.lue_property as lue_property
+import fame.lue_phenomenon as fame_phen
 
+from .fame_utils import TimeDiscretization
 
 
 
@@ -82,10 +85,13 @@ class PropertySet(object):
         p.pset_domain = self._domain
 
 
-    def add_property(self, property_name, dtype=numpy.float64):
+    def add_property(self, property_name, dtype=numpy.float64, time_discretisation=TimeDiscretization.dynamic):
 
       assert isinstance(property_name, str)
       assert self._lue_dataset_name is not None
+
+      #print(time_discretisation == lue.TimeDiscretization.dynamic)
+      print(time_discretisation == TimeDiscretization.dynamic)
 
       # FAME
       p = lue_property.Property(self._phen)
@@ -100,6 +106,10 @@ class PropertySet(object):
 
       time_domain = self._lue_dataset.phenomena[self._lue_phenomenon_name].property_sets['fame_time_extent'].time_domain
       nr_timesteps = 100
+
+      #print(time_domain.property_sets['lue_nr_time_units'])
+      print(time_domain.value.nr_counts)#lue_nr_time_units)#['lue_time_domain'])#lue_nr_time_units)
+      #raise SystemExit
 
       pset = self._lue_dataset.phenomena[self._lue_phenomenon_name].property_sets[self.__name__]
       prop = pset.add_property(property_name, dtype=numpy.dtype(dtype), shape=(1, self.nr_objects()))

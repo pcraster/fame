@@ -3,8 +3,9 @@ import os
 import numpy
 #import copy
 
-from .luemem_values import *
+#from .luemem_values import *
 
+import fame.luemem_values as fame_values
 
 class Property(object):
     def __init__(self, pset):
@@ -59,7 +60,7 @@ class Property(object):
         raise NotImplementedError
 
       assert values is not None
-      self._values = Values(self._pset, values)
+      self._values = fame_values.Values(self._pset, values)
 
 
     @property
