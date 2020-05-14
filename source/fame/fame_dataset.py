@@ -1,4 +1,5 @@
 import os
+import numpy as np
 
 try:
   import lue
@@ -43,10 +44,12 @@ class LueMemory(object):
 
       if self._nr_timesteps > 1:
           epoch = lue.Epoch(lue.Epoch.Kind.common_era)
+          # daily time steps
+          self._lue_clock = lue.Clock(epoch, lue.Unit.day, 1)
 
-          self._lue_clock = lue.Clock(epoch, lue.Unit.day, self._nr_timesteps)
       else:
         raise NotImplementedError
+
 
     @property
     def lue_clock(self):
@@ -63,6 +66,64 @@ class LueMemory(object):
 
 
 
+    def add_framework(self):
+      """ Adding a phenomenon holding framwork relevant information
+          in a good case this can be shared between phenomena
+      """
+
+      # LUE
+      self.lue_dataset.add_phenomenon('framework')
+      tmp = self.lue_dataset.phenomena['framework']
+
+      self.lue_time_extent = tmp.add_property_set(
+              "fame_time_cell",
+              lue.TimeConfiguration(lue.TimeDomainItemType.cell), self.lue_clock)
+
+      # just a number, TODO sampleNumber?
+      simulation_id = 1
+
+      # dynamic...
+      time_cell = tmp.property_sets["fame_time_cell"]
+
+      # add one timstep, 0=inital, 1...T=timesteps
+      timesteps = self._nr_timesteps + 1
+
+      time_cell.object_tracker.active_set_index.expand(timesteps) \
+        [-timesteps:] = np.arange(0, timesteps, dtype=np.dtype(np.uint64))
+
+      time_cell.object_tracker.active_object_id.expand(timesteps) \
+        [-timesteps:] = np.full(timesteps, simulation_id, dtype=lue.dtype.ID)
+
+      time_cell.time_domain.value.count.expand(1)[-1] = timesteps
+      time_cell.time_domain.value.expand(1)[-1] = np.array([0, timesteps], dtype=lue.dtype.TickPeriodCount).reshape(1, 2)
+
+
+      # We create one time cell with nr of timesteps (dynamic)
+#      self.lue_time_extent = tmp.add_property_set(
+#              "fame_time_extent",
+#              lue.TimeConfiguration(lue.TimeDomainItemType.cell), self.lue_clock)
+
+      #self.lue_time_extent = tmp.add_property_set(
+              #"fame_time_cell",
+              #lue.TimeConfiguration(lue.TimeDomainItemType.cell), self.lue_clock)
+
+      # We create one time box (static)
+#      self.lue_time_extent = tmp.add_property_set(
+#              "fame_time_box",
+#              lue.TimeConfiguration(lue.TimeDomainItemType.box), lue.Clock(lue.Epoch(lue.Epoch.Kind.common_era), lue.Unit.day, self._nr_timesteps))
+
+      # Discretisation
+
+
+
+      # static...
+
+#      time_cell = tmp.property_sets["fame_time_box"]
+#      time_cell.object_tracker.active_set_index.expand(1)[-1:] = 0
+#      time_cell.object_tracker.active_object_id.expand(1)[-1:] = simulation_id
+#      time_cell.time_domain.value.expand(1)[-1] = np.array([0, self._nr_timesteps], dtype=lue.dtype.TickPeriodCount).reshape(1, 2)
+
+      lue.assert_is_valid(self.lue_filename)
 
 
     def add_phenomenon(self, phen_name, nr_objects):
@@ -84,12 +145,8 @@ class LueMemory(object):
       tmp = self.lue_dataset.phenomena[phen_name]
       tmp.object_id.expand(p.nr_objects)[:] = p.object_ids
 
-      self.lue_time_extent = tmp.add_property_set(
-              "fame_time_extent",
-              lue.TimeConfiguration(lue.TimeDomainItemType.cell), self.lue_clock)
 
-
-      assert lue.validate(self.lue_filename)
+      lue.assert_is_valid(self.lue_filename)
 
       return p
 
@@ -113,7 +170,10 @@ class LueMemory(object):
       self.lue_filename = fpath
       self.lue_dataset = lue.create_dataset(self.lue_filename)
 
-      assert lue.validate(self.lue_filename)
+
+      self.add_framework()
+
+      lue.assert_is_valid(self.lue_filename)
 
 
 

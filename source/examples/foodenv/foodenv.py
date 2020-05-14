@@ -57,7 +57,7 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
 
     # Propensity will be changed and written per time step (default situation)
     self.household.frontdoor.add_property('propensity')
-
+    raise SystemExit
     # These properties will be constant over time and stored once
     self.household.frontdoor.add_property('default_propensity', time_discretisation=fame.TimeDiscretization.static)
     self.household.frontdoor.add_property('alpha', time_discretisation=fame.TimeDiscretization.static)
@@ -71,7 +71,6 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
     self.household.frontdoor.add_property('neighboured_foodstores', dtype=numpy.int16)
 
     #nr_objects = self.household.nr_objects
-    #print(self.household.nr_objects)
     self.household.frontdoor.alpha.values = 0.15
     self.household.frontdoor.beta.values = 0.5
     self.household.frontdoor.gamma.values = 0.0
@@ -86,15 +85,12 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
     self.household.frontdoor.social_neighbours.values = neighbour_network(self.household.nr_objects, 2, 0.1, seed)
 
 
-
-
     # Food stores, 1d agents fttb
     locations = Points(mobile=False)
     #locations.read('shops_locs.csv')
     locations.read('s8.csv')
 
     self.foodstore = self.luemem.add_phenomenon('foodstore', locations.nr_items)
-
 
     nr_objects = locations.nr_items
 
@@ -104,9 +100,6 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
     self.foodstore.frontdoor.add_property('buffersize')
     self.foodstore.frontdoor.add_property('delta')
 
-
-
-
     self.foodstore.frontdoor.propensity.values = uniform(self.foodstore.frontdoor, lower, upper)
     self.foodstore.frontdoor.buffersize.values = 500
     self.foodstore.frontdoor.delta.values = 0.2
@@ -114,7 +107,7 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
 
     areas = Areas()
     areas.read('shops_extent.csv')
-    self.foodstore.add_property_set('surrounding', areas, fame.TimeDomain.static)
+ #   self.foodstore.add_property_set('surrounding', areas, fame.TimeDomain.static)
 
     #self.foodstore.surrounding.add_property('randomfield')
     #self.foodstore.surrounding.randomfield.values = numpy.random.uniform(-1, 1, (nr_objects, 2, 2))
@@ -123,6 +116,7 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
     # Temporary way to decreaser runtime.
     # Calculate once as we assume no changes over time
     self.foodstore.frontdoor.add_property('neighboured_houses')
+
 
     # Assign spatial neighbours
     self.household.frontdoor.neighboured_foodstores.values = get_others(self.household.frontdoor.domain, self.foodstore.frontdoor.domain, self.household.frontdoor.buffersize)
@@ -134,24 +128,24 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
     # Read the Utrecht map
 
     # for testing we use a dummy raster
-    self.raster = 1000 + pcr.uniqueid(1)
-    self.report(self.raster, 'tmp_raster')
+    #self.raster = 1000 + pcr.uniqueid(1)
+    #self.report(self.raster, 'tmp_raster')
 
-    # One raster object with house locations
-    self.aoi = self.luemem.add_phenomenon('extent', 1)
+    ## One raster object with house locations
+    #self.aoi = self.luemem.add_phenomenon('extent', 1)
 
-    # Also add one raster holding the entire modelling area (municipality Utrecht) to the dataset
-    area = Areas()
-    area.read('utrecht.csv')
+    ## Also add one raster holding the entire modelling area (municipality Utrecht) to the dataset
+    #area = Areas()
+    #area.read('utrecht.csv')
 
-    self.aoi.add_property_set('utrecht', area, fame.TimeDomain.static)
-    self.aoi.utrecht.add_property('houses')
+    #self.aoi.add_property_set('utrecht', area, fame.TimeDomain.static)
+    #self.aoi.utrecht.add_property('houses')
 
     # self.raster = pcr.readmap('houses.map')
     # raster_np = pcr.pcr2numpy(self.raster, numpy.nan)
     # self.aoi.utrecht.houses.values = raster_np
 
-    self.aoi.utrecht.write()
+ #   self.aoi.utrecht.write()
 
 
     #raise SystemExit
@@ -214,12 +208,14 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
 
     self.household.frontdoor.write(self.currentTimeStep())
 
-    self.foodstore.frontdoor.write(self.currentTimeStep())
+#    self.foodstore.frontdoor.write(self.currentTimeStep())
+
+    #raise SystemExit
 
 
 
 
-timesteps = 15
+timesteps = 37
 samples = 1
 
 myModel = FoodConsumption()

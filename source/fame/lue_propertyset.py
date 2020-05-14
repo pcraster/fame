@@ -90,9 +90,6 @@ class PropertySet(object):
       assert isinstance(property_name, str)
       assert self._lue_dataset_name is not None
 
-      #print(time_discretisation == lue.TimeDiscretization.dynamic)
-      print(time_discretisation == TimeDiscretization.dynamic)
-
       # FAME
       p = lue_property.Property(self._phen)
       p.name = property_name
@@ -104,19 +101,15 @@ class PropertySet(object):
 
       # LUE
 
-      time_domain = self._lue_dataset.phenomena[self._lue_phenomenon_name].property_sets['fame_time_extent'].time_domain
-      nr_timesteps = 100
-
-      #print(time_domain.property_sets['lue_nr_time_units'])
-      print(time_domain.value.nr_counts)#lue_nr_time_units)#['lue_time_domain'])#lue_nr_time_units)
-      #raise SystemExit
+      nr_timesteps = self._lue_dataset.phenomena['framework'].property_sets['fame_time_cell'].time_domain.value[0][1]
 
       pset = self._lue_dataset.phenomena[self._lue_phenomenon_name].property_sets[self.__name__]
-      prop = pset.add_property(property_name, dtype=numpy.dtype(dtype), shape=(1, self.nr_objects()))
+      prop = pset.add_property(property_name, dtype=numpy.dtype(dtype), shape=(1,nr_timesteps), value_variability=lue.ValueVariability.variable)
+# nr_timesteps,1
+      prop.value.expand(self.nr_objects())
 
-      prop.value.expand(nr_timesteps)#[:] = numpy.zeros((self.nr_objects(), self.nr_objects()))
 
-      assert lue.validate(self._lue_dataset_name)
+      lue.assert_is_valid(self._lue_dataset_name)
 
 
 
@@ -130,12 +123,15 @@ class PropertySet(object):
             if prop.name != 'neighboured_houses' and prop.name != 'neighboured_foodstores':
 
                 lue_prop = lue_pset.properties[prop.name]
+#                raise SystemExit
+
+
 
         else:
           # in initial...
           pass
 
-        assert lue.validate(self._lue_dataset_name)
+        lue.assert_is_valid(self._lue_dataset_name)
 
 
 
