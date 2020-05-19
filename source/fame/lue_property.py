@@ -51,7 +51,7 @@ class Property(object):
       values = None
 
       if isinstance(value, numbers.Number):
-        shape = (self._pset,) #._nr_objects(),)
+        shape = (self._pset,)
         values = numpy.full(shape, value)
 
       elif isinstance(value, numpy.ndarray):

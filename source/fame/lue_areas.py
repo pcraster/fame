@@ -93,6 +93,7 @@ class Areas(object):
 
   def __next__(self):
         if self.iter_idx == self.nr_items:
+            self.iter_idx = 0
             raise StopIteration
 
         values = (self.p1.xcoord[self.iter_idx],

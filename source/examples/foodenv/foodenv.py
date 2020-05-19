@@ -57,7 +57,6 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
 
     # Propensity will be changed and written per time step (default situation)
     self.household.frontdoor.add_property('propensity')
-    raise SystemExit
     # These properties will be constant over time and stored once
     self.household.frontdoor.add_property('default_propensity', time_discretisation=fame.TimeDiscretization.static)
     self.household.frontdoor.add_property('alpha', time_discretisation=fame.TimeDiscretization.static)
@@ -70,7 +69,6 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
     # Calculate once as we assume no changes over time
     self.household.frontdoor.add_property('neighboured_foodstores', dtype=numpy.int16)
 
-    #nr_objects = self.household.nr_objects
     self.household.frontdoor.alpha.values = 0.15
     self.household.frontdoor.beta.values = 0.5
     self.household.frontdoor.gamma.values = 0.0
@@ -79,9 +77,8 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
 
     lower = -0.18344355629253628
     upper = -0.16344355629253626
-    self.household.frontdoor.propensity.values = uniform(self.household.frontdoor, lower, upper)
+    self.household.frontdoor.propensity.values = fame.uniform(self.household.frontdoor, lower, upper)
 
-    #self.household.frontdoor.social_neighbours.values = neighbour_network(nr_objects, 40, 0.1, seed)
     self.household.frontdoor.social_neighbours.values = neighbour_network(self.household.nr_objects, 2, 0.1, seed)
 
 
@@ -100,17 +97,16 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
     self.foodstore.frontdoor.add_property('buffersize')
     self.foodstore.frontdoor.add_property('delta')
 
-    self.foodstore.frontdoor.propensity.values = uniform(self.foodstore.frontdoor, lower, upper)
+    self.foodstore.frontdoor.propensity.values = fame.uniform(self.foodstore.frontdoor, lower, upper)
     self.foodstore.frontdoor.buffersize.values = 500
     self.foodstore.frontdoor.delta.values = 0.2
 
-
     areas = Areas()
     areas.read('shops_extent.csv')
- #   self.foodstore.add_property_set('surrounding', areas, fame.TimeDomain.static)
+    self.foodstore.add_property_set('surrounding', areas, fame.TimeDomain.static)
 
-    #self.foodstore.surrounding.add_property('randomfield')
-    #self.foodstore.surrounding.randomfield.values = numpy.random.uniform(-1, 1, (nr_objects, 2, 2))
+    self.foodstore.surrounding.add_property('randomfield')
+    self.foodstore.surrounding.randomfield.values = fame.uniform(self.foodstore.surrounding, lower, upper)
 
 
     # Temporary way to decreaser runtime.
@@ -145,10 +141,9 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
     # raster_np = pcr.pcr2numpy(self.raster, numpy.nan)
     # self.aoi.utrecht.houses.values = raster_np
 
- #   self.aoi.utrecht.write()
+    #self.aoi.utrecht.write()
 
 
-    #raise SystemExit
 
 
 
@@ -193,10 +188,6 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
 
 
 
-
-
-
-
     # We plainly write to PCRaster maps for simplicity of (timeseries) display
     # sample_dir = str(self.currentSampleNumber())
 
@@ -208,9 +199,10 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
 
     self.household.frontdoor.write(self.currentTimeStep())
 
-#    self.foodstore.frontdoor.write(self.currentTimeStep())
+    self.foodstore.frontdoor.write(self.currentTimeStep())
 
-    #raise SystemExit
+    self.foodstore.surrounding.write(self.currentTimeStep())
+
 
 
 

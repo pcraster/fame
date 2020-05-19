@@ -56,3 +56,26 @@ class Values(object):
     for v in self.values:
       print(v)
     return ''
+
+
+
+
+
+
+class DShapeValues(Values):
+
+  def __init__(self, nr_objects, shapes):
+
+    self.values = []
+
+
+  def __setitem__(self, index, value):
+    #try:
+      #idx = index[0]
+    #except Exception as e:
+      #idx = index
+
+    if index < 0 or index > self.nr_objects:
+      raise IndexError
+
+    self.values[index] = value

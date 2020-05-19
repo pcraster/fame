@@ -101,35 +101,50 @@ class PropertySet(object):
 
       # LUE
 
-      nr_timesteps = self._lue_dataset.phenomena['framework'].property_sets['fame_time_cell'].time_domain.value[0][1]
+      nr_timesteps = int(self._lue_dataset.phenomena['framework'].property_sets['fame_time_cell'].time_domain.value[0][1])
 
       pset = self._lue_dataset.phenomena[self._lue_phenomenon_name].property_sets[self.__name__]
-      prop = pset.add_property(property_name, dtype=numpy.dtype(dtype), shape=(1,nr_timesteps), value_variability=lue.ValueVariability.variable)
-# nr_timesteps,1
-      prop.value.expand(self.nr_objects())
 
+
+      if isinstance(p.pset_domain, lue_points.Points):
+        p_shape = ()
+        prop = pset.add_property(property_name, dtype=numpy.dtype(dtype), shape=p_shape, value_variability=lue.ValueVariability.variable)
+        prop.value.expand(self.nr_objects() * nr_timesteps)
+      elif isinstance(p.pset_domain, lue_areas.Areas):
+        p_shape = (p.pset_domain.row_discr[0], p.pset_domain.col_discr[0])
+        prop = pset.add_property(property_name, dtype=numpy.dtype(dtype), shape=p_shape, value_variability=lue.ValueVariability.variable)
+        #prop = pset.add_property(property_name, dtype=numpy.dtype(dtype), rank=2, shape_per_object=lue.ShapePerObject.different,        shape_variability=lue.ShapeVariability.constant)
+        prop.value.expand(self.nr_objects() * nr_timesteps)
+      else:
+        raise NotImplementedError
 
       lue.assert_is_valid(self._lue_dataset_name)
 
 
 
     def write(self, timestep=None):
+        # write ts 0 initial
+        # 1..T dynamic
+
+
+        lue_pset = self._lue_dataset.phenomena[self._lue_phenomenon_name].property_sets[self.__name__]
+        nr_objects = len(self._lue_dataset.phenomena[self._lue_phenomenon_name].object_id[:])
 
         if timestep is not None:
-          timestep -= 1
-          lue_pset = self._lue_dataset.phenomena[self._lue_phenomenon_name].property_sets[self.__name__]
+          # Determine current time slice to write
+          sidx = int(lue_pset.object_tracker.active_set_index[timestep])
+          eidx = sidx + nr_objects
 
           for prop in self._properties:
-            if prop.name != 'neighboured_houses' and prop.name != 'neighboured_foodstores':
+            # TODO
+            if prop.name != 'neighboured_houses' and prop.name != 'neighboured_foodstores' and prop.name != 'social_neighbours':
 
                 lue_prop = lue_pset.properties[prop.name]
-#                raise SystemExit
-
-
+                lue_prop.value[sidx:eidx] = prop.values.values
 
         else:
           # in initial...
-          pass
+          raise NotImplementedError
 
         lue.assert_is_valid(self._lue_dataset_name)
 
