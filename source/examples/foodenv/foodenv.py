@@ -38,7 +38,12 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
 
   def initial(self):
 
-    self.luemem = LueMemory(self.nrTimeSteps())
+    date = datetime.date(2000, 1, 2)
+    time = datetime.time(12, 34)
+    start = datetime.datetime.combine(date, time)
+    unit = fame.TimeUnit.year
+    stepsize = 2
+    self.luemem = LueMemory(start, unit, stepsize, self.nrTimeSteps())
 
     dataset_name = os.path.join(str(self.currentSampleNumber()), 'food_consumption_{}'.format(self.currentSampleNumber()))
     self.luemem.open(dataset_name)
@@ -51,14 +56,14 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
 
 
     ## Houses, 1d agents fttb
-    #self.household = self.luemem.add_phenomenon('household', locations.nr_items)
+    self.household = self.luemem.add_phenomenon('household', locations.nr_items)
 
-    #self.household.add_property_set('frontdoor', locations, fame.TimeDomain.dynamic)
+    self.household.add_property_set('frontdoor', locations, fame.TimeDomain.dynamic)
 
     ## Propensity will be changed and written per time step (default situation)
-    #self.household.frontdoor.add_property('propensity')
+    self.household.frontdoor.add_property('propensity')
     ## These properties will be constant over time and stored once
-    #self.household.frontdoor.add_property('default_propensity', time_discretisation=fame.TimeDiscretization.static)
+    self.household.frontdoor.add_property('default_propensity', time_discretisation=fame.TimeDiscretization.static)
     #self.household.frontdoor.add_property('alpha', time_discretisation=fame.TimeDiscretization.static)
     #self.household.frontdoor.add_property('beta', time_discretisation=fame.TimeDiscretization.static)
     #self.household.frontdoor.add_property('gamma', time_discretisation=fame.TimeDiscretization.static)
@@ -218,7 +223,7 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
 
 
 
-timesteps = 37
+timesteps = 7
 samples = 1
 
 myModel = FoodConsumption()

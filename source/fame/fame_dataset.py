@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import datetime
 
 try:
   import lue
@@ -20,7 +21,7 @@ import fame.lue_phenomenon as fame_phen
 
 class LueMemory(object):
 
-    def __init__(self, last_timestep, first_timestep=1):
+    def __init__(self, start_timestep, unit, stepsize, last_timestep, first_timestep=1):
       """ some text """
 
       self.lue_filename = None
@@ -41,13 +42,13 @@ class LueMemory(object):
 
       self._set_timesteps(first_timestep, last_timestep)
 
-
+      start_timestep = start_timestep.isoformat()
 
       if self._nr_timesteps > 1:
-          epoch = ldm.Epoch(ldm.Epoch.Kind.common_era, "2000-01-01", ldm.Calendar.gregorian)
+          epoch = ldm.Epoch(ldm.Epoch.Kind.common_era, start_timestep, ldm.Calendar.gregorian)
+          print(epoch)
           # daily time steps
-          self._lue_clock = ldm.Clock(epoch, ldm.Unit.day, 1)
-
+          self._lue_clock = ldm.Clock(epoch, unit.value, stepsize)
       else:
         raise NotImplementedError
 

@@ -15,7 +15,7 @@ from .lue_property import *
 from .lue_points import *
 from .lue_areas import *
 
-from .fame_utils import TimeDomain, TimeDiscretization
+from .fame_utils import TimeDomain, TimeDiscretization, TimeUnit
 
 ##from .field_operations.operations import *
 from .operators import *
