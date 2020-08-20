@@ -2,6 +2,7 @@ import numpy as np
 import os
 
 import lue
+import lue.data_model as ldm
 
 
 import fame.lue_points as lue_points
@@ -24,7 +25,7 @@ class Phenomenon(object):
         self._nr_objects = nr_objects
 
         # Plain list of object IDs
-        self._object_ids = np.arange(self._nr_objects, dtype=lue.dtype.ID)
+        self._object_ids = np.arange(self._nr_objects, dtype=ldm.dtype.ID)
 
         self._lue_dataset = None
         self._lue_dataset_name = None
@@ -63,15 +64,15 @@ class Phenomenon(object):
 
       if space_domain is not None:
         if isinstance(space_domain, lue_points.Points):
-          space_type = lue.SpaceDomainItemType.point
+          space_type = ldm.SpaceDomainItemType.point
           rank = 2
         else:
-          space_type = lue.SpaceDomainItemType.box
+          space_type = ldm.SpaceDomainItemType.box
           rank = 2
 
         if not space_domain.mobile:
-          space_configuration = lue.SpaceConfiguration(
-          lue.Mobility.stationary,
+          space_configuration = ldm.SpaceConfiguration(
+          ldm.Mobility.stationary,
           space_type
           )
         else:
@@ -113,13 +114,13 @@ class Phenomenon(object):
       # Index of active set (we only use one set per time cell)
       tmp_location.object_tracker.active_set_index.expand(nr_timesteps)[0:] = np.arange(0, nr_ts_x_objects, len(self._object_ids))
 
-
       # IDs of the active objects of time cells.
       tmp_location.object_tracker.active_object_id.expand(nr_ts_x_objects)[-nr_ts_x_objects:] = ts_obj_id
 
+      tmp_location.object_tracker.active_object_index.expand(nr_ts_x_objects)[:] = np.repeat(np.arange(0, 1), repeats=nr_ts_x_objects)
 
       # Assign coordinates
-      if space_type == lue.SpaceDomainItemType.point:
+      if space_type == ldm.SpaceDomainItemType.point:
 
         space_coordinate_dtype = tmp_location.space_domain.value.dtype
 
@@ -132,7 +133,7 @@ class Phenomenon(object):
         tmp_location.space_domain.value.expand(self._nr_objects)[-self._nr_objects:] = tmp_values
 
 
-      elif space_type == lue.SpaceDomainItemType.box:
+      elif space_type == ldm.SpaceDomainItemType.box:
 
         space_coordinate_dtype = tmp_location.space_domain.value.dtype
 
@@ -147,15 +148,20 @@ class Phenomenon(object):
         tmp_location.space_domain.value.expand(self._nr_objects)[-self._nr_objects:] = tmp_values
 
         # For fields we also add a discretisation property
-        tmp_prop = tmp_location.add_property('fame_discretization', dtype=np.dtype(np.int64), shape=(1,2), value_variability=lue.ValueVariability.constant)
+       # tmp_prop = tmp_location.add_property('fame_discretization', dtype=np.dtype(np.int64), shape=(1,2), value_variability=lue.ValueVariability.constant)
+       # tmp_prop.value.expand(self._nr_objects)
+       # for idx, item in enumerate(space_domain):
+       #   tmp_prop.value[idx]= [item[4], item[5]]
+
+        tmp_prop = tmp_location.add_property('fame_discretization', dtype=ldm.dtype.Count, shape=(2,))
         tmp_prop.value.expand(self._nr_objects)
-        for idx, item in enumerate(space_domain):
-          tmp_prop.value[idx]= [item[4], item[5]]
+
+
 
       else:
         raise NotImplementedError
 
-      lue.assert_is_valid(self._lue_dataset_name)
+      ldm.assert_is_valid(self._lue_dataset_name)
 
 
 

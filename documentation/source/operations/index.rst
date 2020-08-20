@@ -29,12 +29,21 @@ Operations for fields and agent properties
 .. autosummary::
    :toctree: generated
 
-   fame.operators.add
-   fame.operators.sub
-   fame.operators.mul
-   fame.operators.div
    fame.operations.abs
+   fame.operators.add
+   fame.operators.divide
+   fame.operators.equal
+   fame.operators.greater
+   fame.operators.greater_equal
+   fame.operators.less
+   fame.operators.less_equal
+   fame.operators.mul
+   fame.operators.not_equal
+   fame.operators.power
+   fame.operators.sub
    fame.operations.uniform
+
+
 
 
 Operations for field properties

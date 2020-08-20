@@ -1,6 +1,6 @@
 import numbers
 import os
-import numpy
+import numpy as np
 #import copy
 
 #from .luemem_values import *
@@ -8,7 +8,7 @@ import numpy
 import fame.luemem_values as fame_values
 
 class Property(object):
-    def __init__(self, pset):
+    def __init__(self, pset, shapes, pset_uuid, pset_domain):
 
         self._pset = pset
 
@@ -16,10 +16,10 @@ class Property(object):
 
         self._is_agent = None
 
-        self.pset_domain = None
+        self.pset_domain = pset_domain
 
-        self._values = None
-        self._shape = None
+        #self._values = None
+        self._shape = shapes
         self._dtype = None
 
         self.nr_objects = self._pset
@@ -28,6 +28,12 @@ class Property(object):
         self._lue_phen_name = None
         self._lue_pset_name = None
 
+        self._pset_uuid = pset_uuid
+        self._values = fame_values.Values2(self._pset, self._shape, np.nan)
+
+    @property
+    def pset_uuid(self):
+      return self._pset_uuid
 
     @property
     def name(self):
@@ -37,30 +43,34 @@ class Property(object):
     def name(self, value):
       self._name = value
 
-
-
-
     @property
+    def shapes(self):
+      return self._shapes
+
+
+
+    #@property
     def values(self):
       return self._values
 
-    @values.setter
-    def values(self, value):
+    #@values.setter
+    def set_values(self, values):
 
+      #values = None
 
-      values = None
+      #if isinstance(value, numbers.Number):
+        #shape = (self._pset,)
+        #values = numpy.full(shape, value)
 
-      if isinstance(value, numbers.Number):
-        shape = (self._pset,)
-        values = numpy.full(shape, value)
+      #elif isinstance(value, numpy.ndarray):
+        #values = numpy.full(value.shape, value)
+      #else:
+        #raise NotImplementedError
 
-      elif isinstance(value, numpy.ndarray):
-        values = numpy.full(value.shape, value)
-      else:
-        raise NotImplementedError
-
-      assert values is not None
-      self._values = fame_values.Values(self._pset, values)
+      #assert values is not None
+      #self._values = fame_values.Values(self._pset, values)
+      self._values = fame_values.Values2(self._pset, self._shape, values)
+      #raise SystemExit
 
 
     @property
@@ -100,6 +110,18 @@ class Property(object):
 
 
 
-    def __repr__(self):
-      #print(self._values)
-      return ''
+    #def __repr__(self):
+      ##print(self._values)
+      #return ''
+
+
+    #def __setattr__(self, name, value):
+      #print('set property',name,value, type(value))
+      #try:
+        #getattr(self, name)
+        #print('set property try ok',name,value, type(value))
+        #super().__setattr__(name, value)
+      #except AttributeError as e:
+        #super().__setattr__(name, value)
+      ##raise  SystemExit
+      #print(self.__dict__)

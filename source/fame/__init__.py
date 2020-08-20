@@ -21,4 +21,5 @@ from .fame_utils import TimeDomain, TimeDiscretization
 from .operators import *
 from .operations import *
 
+from .fagent.operations import *
 

@@ -1,12 +1,14 @@
-import numpy
+import numpy as np
+import uuid
 
-import lue
+import lue.data_model as ldm
 
 
 import fame.lue_points as lue_points
 import fame.lue_areas as lue_areas
 import fame.lue_property as lue_property
 import fame.lue_phenomenon as fame_phen
+import fame.luemem_values as fame_values
 
 from .fame_utils import TimeDiscretization
 
@@ -29,6 +31,13 @@ class PropertySet(object):
       self._space_domain = space_domain
       self._time_domain = time_domain
 
+      self._uuid = uuid.uuid4()
+      self.shapes = None
+
+
+    @property
+    def uuid(self):
+      return self._uuid
 
     @property
     def space_domain(self):
@@ -58,11 +67,14 @@ class PropertySet(object):
 
     def __getattr__(self, property_name):
       result = None
-      for p in self._properties:
-        if p.name == property_name:
-          result = p
+      try:
+        for p in self._properties:
+          if p.name == property_name:
+            result = p
 
-      return result
+        return result
+      except Exception:
+        pass
 
 
 
@@ -81,19 +93,33 @@ class PropertySet(object):
       else:
         raise NotImplementedError
 
+
       for p in self._properties:
         p.pset_domain = self._domain
 
 
-    def add_property(self, property_name, dtype=numpy.float64, time_discretisation=TimeDiscretization.dynamic):
+    def add_property(self, property_name, dtype=np.float64, time_discretisation=TimeDiscretization.dynamic, rank=None, shape=None):
 
       assert isinstance(property_name, str)
       assert self._lue_dataset_name is not None
 
       # FAME
-      p = lue_property.Property(self._phen)
+      self.shapes = None
+      if isinstance(self._domain, lue_points.Points):
+        if rank == None:
+          self.shapes = [()] * self._phen
+        elif rank != None and shape != None:
+          self.shapes = [shape] * self._phen
+        else:
+          raise NotImplementedError
+      elif isinstance(self._domain, lue_areas.Areas):
+        self.shapes = [(int(self._domain.row_discr[i]), int(self._domain.col_discr[i])) for i in range(len(self._domain.row_discr))]
+      else:
+        raise NotImplementedError
+
+
+      p = lue_property.Property(self._phen, self.shapes, self._uuid, self._domain)
       p.name = property_name
-      p.pset_domain = self._domain
 
       p._lue_pset_name = self.__name__
 
@@ -105,20 +131,52 @@ class PropertySet(object):
 
       pset = self._lue_dataset.phenomena[self._lue_phenomenon_name].property_sets[self.__name__]
 
-
       if isinstance(p.pset_domain, lue_points.Points):
         p_shape = ()
-        prop = pset.add_property(property_name, dtype=numpy.dtype(dtype), shape=p_shape, value_variability=lue.ValueVariability.variable)
+        prop = pset.add_property(property_name, dtype=np.dtype(dtype), shape=p_shape, value_variability=ldm.ValueVariability.variable)
         prop.value.expand(self.nr_objects() * nr_timesteps)
+
       elif isinstance(p.pset_domain, lue_areas.Areas):
-        p_shape = (p.pset_domain.row_discr[0], p.pset_domain.col_discr[0])
-        prop = pset.add_property(property_name, dtype=numpy.dtype(dtype), shape=p_shape, value_variability=lue.ValueVariability.variable)
-        #prop = pset.add_property(property_name, dtype=numpy.dtype(dtype), rank=2, shape_per_object=lue.ShapePerObject.different,        shape_variability=lue.ShapeVariability.constant)
-        prop.value.expand(self.nr_objects() * nr_timesteps)
+
+        # all same shape...
+        #p_shape = (p.pset_domain.row_discr[0], p.pset_domain.col_discr[0])
+        #p_shape = (2,1)
+        #prop = pset.add_property(property_name, dtype=np.dtype(dtype), shape=p_shape, value_variability=lue.ValueVariability.variable)
+        prop = pset.add_property(property_name, dtype=np.dtype(dtype), rank=2,
+            shape_per_object=ldm.ShapePerObject.different,
+            shape_variability=ldm.ShapeVariability.constant)
+         #                        )#shape=p_shape, value_variability=lue.ValueVariability.variable)
+        #prop.value.expand(self.nr_objects() * nr_timesteps)
+
+        space_discr = pset.fame_discretization
+
+        for idx, item in enumerate(p.pset_domain):
+          space_discr.value[idx]= [item[4], item[5]]
+          #prop.value.expand(idx, item, nr_timesteps)
+
+
+        prop.set_space_discretization(
+            ldm.SpaceDiscretization.regular_grid,
+            space_discr)
+        #prop.value.expand(self.nr_objects())
+
+
+        for idx, item in enumerate(p.pset_domain):
+          #space_discr.value[idx]= [item[0], item[1]]
+          #print(idx, item, nr_timesteps)
+          prop.value.expand(idx, tuple([nr_timesteps, item[4], item[5]]), self.nr_objects())#nr_timesteps)#self.nr_objects())#nr_timesteps)
+
+        # all different shape
+        #space_rank = 2
+        #prop = pset.add_property(property_name, dtype=np.dtype(dtype), rank=space_rank,
+            #shape_per_object=lue.ShapePerObject.different,
+            #shape_variability=lue.ShapeVariability.constant)
+
+
       else:
         raise NotImplementedError
 
-      lue.assert_is_valid(self._lue_dataset_name)
+      ldm.assert_is_valid(self._lue_dataset_name)
 
 
 
@@ -138,15 +196,31 @@ class PropertySet(object):
           for prop in self._properties:
             # TODO
             if prop.name != 'neighboured_houses' and prop.name != 'neighboured_foodstores' and prop.name != 'social_neighbours':
-
                 lue_prop = lue_pset.properties[prop.name]
-                lue_prop.value[sidx:eidx] = prop.values.values
+                #lue_prop.value[sidx:eidx] = prop.values.values
+                #lue_prop.value[sidx:eidx] = prop.values().values[0]
+                for idx, val in enumerate(prop.values().values):
+                  lue_prop.value[sidx + idx] = prop.values().values[idx]
 
         else:
           # in initial...
           raise NotImplementedError
 
-        lue.assert_is_valid(self._lue_dataset_name)
+        #lue.assert_is_valid(self._lue_dataset_name)
 
+
+    def __setattr__(self, name, value):
+      try:
+        attr = getattr(self, name)
+        if not isinstance(attr, lue_property.Property):
+          super().__setattr__(name, value)
+        else:
+          if not isinstance(value, lue_property.Property):#fame_values.Values2):
+            attr.set_values(value)
+          else:
+            super().__setattr__(name, value)
+            raise NotImplementedError
+      except AttributeError as e:
+        super().__setattr__(name, value)
 
 

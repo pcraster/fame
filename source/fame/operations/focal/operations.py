@@ -10,7 +10,7 @@ from osgeo import osr
 
 
 def get_others(start_prop, dest_prop, buffer_size):
-
+  # re-use the previous approach to obtain the neighbours within a buffer
   values = numpy.zeros((len(start_prop),len(dest_prop)), dtype=numpy.int8)
 
   spatial_ref = osr.SpatialReference()
@@ -43,14 +43,14 @@ def get_others(start_prop, dest_prop, buffer_size):
   lyr_dest = ds.GetLayer('uid')
 
 
-  for idx, p in enumerate(start_prop): #.pset_domain:
+  for idx, p in enumerate(start_prop):
 
     lyr_shop = ds.CreateLayer('destination_locations', geom_type=ogr.wkbPoint, srs=spatial_ref)
     # just a round buffer
     lyr_dist = ds.CreateLayer('source_buffer', geom_type=ogr.wkbPolygon, srs=spatial_ref)
     point = ogr.Geometry(ogr.wkbPoint)
     point.AddPoint(p[0], p[1])
-    poly = point.Buffer(float(buffer_size.values[idx]))
+    poly = point.Buffer(float(buffer_size.values()[idx]))
     feat = ogr.Feature(lyr_dist.GetLayerDefn())
     feat.SetGeometry(poly)
     lyr_dist.CreateFeature(feat)
@@ -64,7 +64,6 @@ def get_others(start_prop, dest_prop, buffer_size):
 
         uid = target.GetField('uid')
         values[idx, uid] = 1
-
 
   return values
 
@@ -120,7 +119,7 @@ def focal_average_others(start_prop, dest_prop, value_prop, buffer_size, default
     feat = ogr.Feature(lyr_stores.GetLayerDefn())
     feat.SetGeometry(point)
 
-    val = value_prop.values[idx]
+    val = value_prop.values()[idx]
     feat.SetField('value', val)
 
     lyr_stores.CreateFeature(feat)
@@ -129,7 +128,7 @@ def focal_average_others(start_prop, dest_prop, value_prop, buffer_size, default
   lyr_stores = None
   lyr_stores = ds.GetLayer('values')
 
-  default_value = default_value.values[0,...]
+  default_value = default_value.values()[0]#,...]
   # For each object in point locations:
   c = 0
   for idx, p in enumerate(start_prop): #.pset_domain:
@@ -139,7 +138,7 @@ def focal_average_others(start_prop, dest_prop, value_prop, buffer_size, default
     lyr_dist = ds.CreateLayer('source_buffer', geom_type=ogr.wkbPolygon, srs=spatial_ref)
     point = ogr.Geometry(ogr.wkbPoint)
     point.AddPoint(p[0], p[1])
-    poly = point.Buffer(float(buffer_size.values[idx]))
+    poly = point.Buffer(float(buffer_size.values()[idx]))
     feat = ogr.Feature(lyr_dist.GetLayerDefn())
     feat.SetGeometry(poly)
     lyr_dist.CreateFeature(feat)
@@ -163,7 +162,7 @@ def focal_average_others(start_prop, dest_prop, value_prop, buffer_size, default
 
       object_value = val / fcount
 
-    tmp_prop.values[idx,...] = object_value
+    tmp_prop.values()[idx] = object_value
 
     ds.DeleteLayer('destination_locations')
     ds.DeleteLayer('source_buffer')

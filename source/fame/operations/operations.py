@@ -4,6 +4,8 @@ import os
 import subprocess
 
 import fame.lue_property as lue_property
+import fame.lue_points as points
+import fame.lue_areas as areas
 
 #import pcraster
 
@@ -30,30 +32,30 @@ def pset_report(prop, filename, path, ts,name):
 
 
 
-def property_average(prop):
+def agents_average(prop):
+  """returns average value of property values """
   if not isinstance(prop, lue_property.Property):
     raise NotImplementedError
 
+  if not isinstance(prop.pset_domain, points.Points):
+    raise NotImplementedError
 
   tmp_prop = copy.deepcopy(prop)
+  nr_objects = tmp_prop.nr_objects
 
-  tmp_values = numpy.average(prop.values.values)
+  tmp = numpy.zeros(nr_objects)
 
-  for idx,i in enumerate(prop.values.values):
-    tmp_prop.values[idx,...] = tmp_values
+  for i in range(0, nr_objects):
+    tmp[i] = tmp_prop.values()[i]
 
-  return tmp_prop
+  tmp_values = numpy.average(tmp)
 
-
-
-def abs(self):
-  """ """
-  tmp_prop = copy.deepcopy(self)
-
-  for idx,i in enumerate(self.values.values):
-    tmp_prop.values[idx,...] = numpy.abs(tmp_prop.values[idx])
+  for i in range(0, nr_objects):
+    tmp_prop.values()[i] = tmp_values
 
   return tmp_prop
+
+
 
 
 
