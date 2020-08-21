@@ -8,7 +8,7 @@ import numpy as np
 import fame.luemem_values as fame_values
 
 class Property(object):
-    def __init__(self, pset, shapes, pset_uuid, pset_domain):
+    def __init__(self, pset, shapes, pset_uuid, pset_domain, time_discretisation):
 
         self._pset = pset
 
@@ -30,6 +30,10 @@ class Property(object):
 
         self._pset_uuid = pset_uuid
         self._values = fame_values.Values2(self._pset, self._shape, np.nan)
+
+
+        self.time_discretisation = time_discretisation
+
 
     @property
     def pset_uuid(self):

@@ -46,8 +46,6 @@ class LueMemory(object):
 
       if self._nr_timesteps > 1:
           epoch = ldm.Epoch(ldm.Epoch.Kind.common_era, start_timestep, ldm.Calendar.gregorian)
-          print(epoch)
-          # daily time steps
           self._lue_clock = ldm.Clock(epoch, unit.value, stepsize)
       else:
         raise NotImplementedError

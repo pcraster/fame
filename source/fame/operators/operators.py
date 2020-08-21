@@ -71,6 +71,7 @@ def abs(self):
 
 
 def exp(self):
+  """ """
   return _PropOp(self, numpy.exp)
 
 

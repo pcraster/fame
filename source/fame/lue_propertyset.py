@@ -34,6 +34,8 @@ class PropertySet(object):
       self._uuid = uuid.uuid4()
       self.shapes = None
 
+      self.time_discretisation = None
+
 
     @property
     def uuid(self):
@@ -103,6 +105,9 @@ class PropertySet(object):
       assert isinstance(property_name, str)
       assert self._lue_dataset_name is not None
 
+      self.time_discretisation = time_discretisation
+
+
       # FAME
       self.shapes = None
       if isinstance(self._domain, lue_points.Points):
@@ -118,7 +123,7 @@ class PropertySet(object):
         raise NotImplementedError
 
 
-      p = lue_property.Property(self._phen, self.shapes, self._uuid, self._domain)
+      p = lue_property.Property(self._phen, self.shapes, self._uuid, self._domain, self.time_discretisation)
       p.name = property_name
 
       p._lue_pset_name = self.__name__
@@ -132,9 +137,14 @@ class PropertySet(object):
       pset = self._lue_dataset.phenomena[self._lue_phenomenon_name].property_sets[self.__name__]
 
       if isinstance(p.pset_domain, lue_points.Points):
-        p_shape = ()
-        prop = pset.add_property(property_name, dtype=np.dtype(dtype), shape=p_shape, value_variability=ldm.ValueVariability.variable)
-        prop.value.expand(self.nr_objects() * nr_timesteps)
+
+        if self.time_discretisation == TimeDiscretization.dynamic:
+          p_shape = ()
+          prop = pset.add_property(property_name, dtype=np.dtype(dtype), shape=p_shape, value_variability=ldm.ValueVariability.variable)
+          prop.value.expand(self.nr_objects() * nr_timesteps)
+        else:
+          prop = pset.add_property(property_name, dtype=np.dtype(dtype))
+          prop.value.expand(self.nr_objects())
 
       elif isinstance(p.pset_domain, lue_areas.Areas):
 
@@ -180,7 +190,7 @@ class PropertySet(object):
 
 
 
-    def write(self, timestep=None):
+    def write(self, timestep):
         # write ts 0 initial
         # 1..T dynamic
 
@@ -188,7 +198,24 @@ class PropertySet(object):
         lue_pset = self._lue_dataset.phenomena[self._lue_phenomenon_name].property_sets[self.__name__]
         nr_objects = len(self._lue_dataset.phenomena[self._lue_phenomenon_name].object_id[:])
 
-        if timestep is not None:
+        # Static data...
+        if timestep == 0:
+
+          for prop in self._properties:
+            if prop.time_discretisation == TimeDiscretization.static:
+              lue_prop = lue_pset.properties[prop.name]
+              for idx, val in enumerate(prop.values().values):
+                lue_prop.value[idx] = prop.values().values[idx]
+            if prop.time_discretisation == TimeDiscretization.dynamic:
+              if prop.name != 'neighboured_houses' and prop.name != 'neighboured_foodstores' and prop.name != 'social_neighbours':
+                lue_prop = lue_pset.properties[prop.name]
+                for idx, val in enumerate(prop.values().values):
+                  lue_prop.value[idx] = prop.values().values[idx]
+
+
+        #if timestep is not None:
+        # Dynamic data...
+        else:
           # Determine current time slice to write
           sidx = int(lue_pset.object_tracker.active_set_index[timestep])
           eidx = sidx + nr_objects
@@ -202,9 +229,9 @@ class PropertySet(object):
                 for idx, val in enumerate(prop.values().values):
                   lue_prop.value[sidx + idx] = prop.values().values[idx]
 
-        else:
+        #else:
           # in initial...
-          raise NotImplementedError
+        #  raise NotImplementedError
 
         #lue.assert_is_valid(self._lue_dataset_name)
 
@@ -215,11 +242,11 @@ class PropertySet(object):
         if not isinstance(attr, lue_property.Property):
           super().__setattr__(name, value)
         else:
-          if not isinstance(value, lue_property.Property):#fame_values.Values2):
+          if not isinstance(value, lue_property.Property):
             attr.set_values(value)
           else:
-            super().__setattr__(name, value)
-            raise NotImplementedError
+            #super().__setattr__(name, value)
+            attr.set_values(value)
       except AttributeError as e:
         super().__setattr__(name, value)
 

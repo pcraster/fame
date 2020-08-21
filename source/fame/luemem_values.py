@@ -1,6 +1,7 @@
 import numpy as np
 from collections import OrderedDict
 
+import fame.lue_property as lue_property
 
 
 
@@ -67,7 +68,6 @@ class Values2(object):
   def __init__(self, nr_objects, shapes, values):
 
     self.iter_idx = 0
-
     self.nr_objects = nr_objects
 
     self.values = OrderedDict()
@@ -77,6 +77,9 @@ class Values2(object):
 
     elif isinstance(values, np.ndarray):
       self._init_array(shapes, values)
+
+    elif isinstance(values, lue_property.Property):
+      self._init_prop(shapes, values)
     else:
       raise NotImplementedError
 
@@ -102,6 +105,16 @@ class Values2(object):
         raise NotImplementedError
 
       self.values[idx] = tmp
+
+
+  def _init_prop(self, shapes, values):
+
+    for idx, shape in enumerate(shapes):
+      self.values[idx] = values.values().values[idx]
+
+
+
+
 
   def __setitem__(self, index, value):
     #try:

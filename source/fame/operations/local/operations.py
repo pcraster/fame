@@ -7,7 +7,7 @@ import fame.lue_points as points
 import fame.lue_areas as areas
 
 
-def uniform(property_set, lower=0.0, upper=1.0):
+def uniform(property_set, lower=0.0, upper=1.0, seed=0):
   """ Returns uniform value for each object. Can be applied to fields and objects.
 
   :param property_set: Property set
@@ -55,21 +55,23 @@ def uniform(property_set, lower=0.0, upper=1.0):
     #values = numpy.random.uniform(lower, upper, (property_set.nr_objects(), int(property_set._space_domain.row_discr[0]), int(property_set._space_domain.col_discr[0])))
 
 
-  tmp_prop = fame.lue_property.Property(property_set._phen, property_set.shapes, property_set.uuid, property_set._domain)
+  tmp_prop = fame.lue_property.Property(property_set._phen, property_set.shapes, property_set.uuid, property_set._domain, property_set.time_discretization)
 
 
   for idx in range(nr_objects): #self.values()):
     values = None
     if isinstance(property_set._space_domain, points.Points):
+      if seed != 0:
+        numpy.random.seed(seed + idx)
       values = numpy.random.uniform(lower_values[idx], upper_values[idx])
     elif isinstance(property_set._space_domain, areas.Areas):
       #values = numpy.random.uniform(lower_values[idx], upper_values[idx], (property_set.nr_objects(), int(property_set._space_domain.row_discr[idx]), int(property_set._space_domain.col_discr[idx])))
+      if seed != 0:
+        numpy.random.seed(seed + idx)
       values = numpy.random.uniform(lower_values[idx], upper_values[idx], (int(property_set._space_domain.row_discr[idx]), int(property_set._space_domain.col_discr[idx])))
     else:
       raise NotImplementedError
 
-    tmp_prop.values()[idx] = values#self.values()[idx] - something.values()[idx]
+    tmp_prop.values()[idx] = values
 
-  #tmp_prop.values = values
-  #raise SystemExit
-  return tmp_prop #values
+  return tmp_prop
