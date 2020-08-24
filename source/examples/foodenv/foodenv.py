@@ -86,7 +86,7 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
     self.household.frontdoor.social_neighbours = neighbour_network(self.household.nr_objects, 2, 0.1, seed)
 
 
-    # Food stores, 1d agents fttb
+    # Food stores, 1d properties
     shop_locations = Points(mobile=False)
     #locations.read('shops_locs.csv')
     shop_locations.read('s8.csv')
@@ -107,14 +107,33 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
     self.foodstore.frontdoor.buffersize = 500
     self.foodstore.frontdoor.delta = 0.2
 
+
+    # Foodstore, 2d properties
     areas = Areas()
     areas.read('shops_extent.csv')
     self.foodstore.add_property_set('surrounding', areas, fame.TimeDomain.static)
 
-    self.foodstore.surrounding.add_property('randomfield')
-    self.foodstore.surrounding.add_property('centre')
+    # Add static properties
+    self.foodstore.surrounding.add_property('randomfield', time_discretisation=fame.TimeDiscretization.static)
+    self.foodstore.surrounding.add_property('centre', time_discretisation=fame.TimeDiscretization.static)
+    self.foodstore.surrounding.add_property('spreadvalues', time_discretisation=fame.TimeDiscretization.static)
 
+    # 'same' uniform as for point agents
     self.foodstore.surrounding.randomfield = fame.uniform(self.foodstore.surrounding, 0, 1, seed)
+
+    # map algebra operation
+    self.foodstore.surrounding.randomfield += 0.3
+
+    # Workaround, create raster with 1 in centre (starting location)
+    for idx,f in enumerate(self.foodstore.surrounding.centre.values()):
+      r_centre = f.shape[0] // 2
+      c_centre = f.shape[1] // 2
+      a = numpy.zeros(f.shape)
+      a[r_centre][c_centre] = 1
+      self.foodstore.surrounding.centre.values().values[idx] = a
+
+    # Executing PCRaster spread on each agent
+    self.foodstore.surrounding.spreadvalues = fame.spread(self.foodstore.surrounding, self.foodstore.surrounding.centre, 0, 1)
 
 
     # Temporary way to decrease runtime.
@@ -130,6 +149,13 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
     self.foodstore.frontdoor.neighboured_houses = get_others(self.foodstore.frontdoor.domain, self.household.frontdoor.domain, self.foodstore.frontdoor.buffersize)
 
     self.timestep = 0.5
+
+
+    # Write to LUE
+    self.household.frontdoor.write(self.currentTimeStep())
+    self.foodstore.frontdoor.write(self.currentTimeStep())
+    self.foodstore.surrounding.write(self.currentTimeStep())
+
 
 
     ## Read the Utrecht map
@@ -155,8 +181,6 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
     ##self.aoi.utrecht.write()
 
 
-    self.household.frontdoor.write(self.currentTimeStep())
-    self.foodstore.frontdoor.write(self.currentTimeStep())
 
 
   def dynamic(self):

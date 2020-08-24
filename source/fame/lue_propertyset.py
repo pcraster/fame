@@ -152,9 +152,25 @@ class PropertySet(object):
         #p_shape = (p.pset_domain.row_discr[0], p.pset_domain.col_discr[0])
         #p_shape = (2,1)
         #prop = pset.add_property(property_name, dtype=np.dtype(dtype), shape=p_shape, value_variability=lue.ValueVariability.variable)
-        prop = pset.add_property(property_name, dtype=np.dtype(dtype), rank=2,
+
+
+
+        if self.time_discretisation == TimeDiscretization.dynamic:
+          prop = pset.add_property(property_name, dtype=np.dtype(dtype), rank=2,
             shape_per_object=ldm.ShapePerObject.different,
             shape_variability=ldm.ShapeVariability.constant)
+        else:
+          # Same shape
+          # prop = pset.add_property(property_name, dtype=np.dtype(dtype), shape=shape)
+
+          # Different shape
+          prop = pset.add_property(property_name, dtype=np.dtype(dtype), rank=2)#,
+            #shape_per_object=ldm.ShapePerObject.different,
+            #shape_variability=ldm.ShapeVariability.constant)
+
+
+
+
          #                        )#shape=p_shape, value_variability=lue.ValueVariability.variable)
         #prop.value.expand(self.nr_objects() * nr_timesteps)
 
@@ -170,11 +186,19 @@ class PropertySet(object):
             space_discr)
         #prop.value.expand(self.nr_objects())
 
+        rank = 2
+        if self.time_discretisation == TimeDiscretization.dynamic:
+          for idx, item in enumerate(p.pset_domain):
+            prop.value.expand(idx, tuple([nr_timesteps, item[4], item[5]]), self.nr_objects())
+        else:
+          shapes = np.zeros(self.nr_objects() * rank, dtype=ldm.dtype.Count).reshape(self.nr_objects(), rank)
 
-        for idx, item in enumerate(p.pset_domain):
-          #space_discr.value[idx]= [item[0], item[1]]
-          #print(idx, item, nr_timesteps)
-          prop.value.expand(idx, tuple([nr_timesteps, item[4], item[5]]), self.nr_objects())#nr_timesteps)#self.nr_objects())#nr_timesteps)
+          for idx, item in enumerate(p.pset_domain):
+            shapes[idx][0] = item[4]
+            shapes[idx][1] = item[5]
+
+          prop.value.expand(self._lue_dataset.phenomena[self._lue_phenomenon_name].object_id[:], shapes)
+
 
         # all different shape
         #space_rank = 2
@@ -197,6 +221,7 @@ class PropertySet(object):
 
         lue_pset = self._lue_dataset.phenomena[self._lue_phenomenon_name].property_sets[self.__name__]
         nr_objects = len(self._lue_dataset.phenomena[self._lue_phenomenon_name].object_id[:])
+        object_ids = self._lue_dataset.phenomena[self._lue_phenomenon_name].object_id[:]
 
         # Static data...
         if timestep == 0:
@@ -204,8 +229,15 @@ class PropertySet(object):
           for prop in self._properties:
             if prop.time_discretisation == TimeDiscretization.static:
               lue_prop = lue_pset.properties[prop.name]
-              for idx, val in enumerate(prop.values().values):
-                lue_prop.value[idx] = prop.values().values[idx]
+              if isinstance(prop.pset_domain, lue_points.Points):
+                for idx, val in enumerate(prop.values().values):
+                  lue_prop.value[idx] = prop.values().values[idx]
+              else:
+                for idx, val in enumerate(prop.values().values):
+                  lue_prop.value[object_ids[idx]][:] = prop.values().values[idx]
+
+
+
             if prop.time_discretisation == TimeDiscretization.dynamic:
               if prop.name != 'neighboured_houses' and prop.name != 'neighboured_foodstores' and prop.name != 'social_neighbours':
                 lue_prop = lue_pset.properties[prop.name]

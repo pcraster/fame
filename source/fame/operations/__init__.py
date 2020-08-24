@@ -3,7 +3,7 @@
 
 
 # should be pcraster_operations?!
-# from .field_operations.operations import *
+from .field_operations.operations import *
 
 
 
