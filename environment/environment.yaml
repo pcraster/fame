@@ -1,0 +1,16 @@
+name: workshop
+channels:
+  - conda-forge
+  - https://pcraster.geo.uu.nl/pcraster/pcraster
+  - nodefaults
+dependencies:
+  - python=3.7
+  - numpy
+  - matplotlib
+  - xarray
+  - pandas
+  - geopandas
+  - git
+  - gdal
+  - pcraster
+  - lue

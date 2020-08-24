@@ -113,6 +113,9 @@ class FoodConsumption(DynamicModel, MonteCarloModel):
     areas.read('shops_extent.csv')
     self.foodstore.add_property_set('surrounding', areas, fame.TimeDomain.static)
 
+    # Add one dynamic property
+    # self.foodstore.surrounding.add_property('dynamicfield', time_discretisation=fame.TimeDiscretization.dynamic)
+
     # Add static properties
     self.foodstore.surrounding.add_property('randomfield', time_discretisation=fame.TimeDiscretization.static)
     self.foodstore.surrounding.add_property('centre', time_discretisation=fame.TimeDiscretization.static)
