@@ -12,5 +12,6 @@ dependencies:
   - geopandas
   - git
   - gdal
+  - networkx
   - pcraster
   - lue
