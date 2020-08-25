@@ -82,6 +82,7 @@ class FoodConsumption(DynamicModel):
 
 
     self.household.frontdoor.a = fame.uniform(self.household.frontdoor, -0.0001, 0.0001, seed)
+    self.household.frontdoor.a = 1#fame.uniform(self.household.frontdoor, -0.0001, 0.0001, seed)
     self.household.frontdoor.betaH = 0.8
     self.household.frontdoor.gammaH = 0.8
     self.household.frontdoor.resultingSlopeAtZero = (self.household.frontdoor.gammaH * self.household.frontdoor.betaH) / 0.4
@@ -174,9 +175,10 @@ class FoodConsumption(DynamicModel):
     self.foodstore.frontdoor.write(self.currentTimeStep())
     self.foodstore.surrounding.write(self.currentTimeStep())
 
-    self.timestep = 0.01
+    self.timestep = 0.1
+    print(self.household.frontdoor.x.values().values)
 
-
+  # household
   def diffEqTermOne(self, x, a, betaH, gammaH):
     return -((betaH / (1.0 + fame.exp(-gammaH*(x-a)))) - (betaH/2.0))
 
@@ -186,11 +188,12 @@ class FoodConsumption(DynamicModel):
 
   def dynamic(self):
     y = 3
-    #self.household.frontdoor.x = self.household.frontdoor.x + self.timestep * (self.diffEqTermOne(self.household.frontdoor.x, self.household.frontdoor.a, self.household.frontdoor.betaH, self.household.frontdoor.gammaH) + self.diffEqTermTwo(y, self.household.frontdoor.a, self.household.frontdoor.betaO, self.household.frontdoor.gammaO))
+    self.household.frontdoor.x = self.household.frontdoor.x + self.timestep * (self.diffEqTermOne(self.household.frontdoor.x, self.household.frontdoor.a, self.household.frontdoor.betaH, self.household.frontdoor.gammaH) + self.diffEqTermTwo(y, self.household.frontdoor.a, self.household.frontdoor.betaO, self.household.frontdoor.gammaO))
     # shop propensity is equal to average of propensity of all households
     #y = averageOnId(shopIDs,x)
 
 
+    #self.household.frontdoor.write(self.currentTimeStep())
 
 timesteps = 7
 

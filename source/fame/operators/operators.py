@@ -39,8 +39,8 @@ def _PropOpB(arg1, arg2, op):
   else:
     argument2 = arg2.values()
 
-  for idx,i in enumerate(arg1.values()):
-    tmp_prop.values()[idx] = op(arg1.values()[idx], argument2[idx])
+  for idx,i in enumerate(tmp_prop.values()):
+    tmp_prop.values()[idx] = op(tmp_prop.values()[idx], argument2[idx])
 
   return tmp_prop
 
@@ -95,7 +95,6 @@ def sub(self, other):
   """
   Some text about the -
   """
-
   return _PropOpB(self, other, numpy.subtract)
 
 
@@ -153,8 +152,7 @@ def rpower(self, number):
 
 
 def neg(self):
-  if not isinstance(prop, lue_property.Property):
-    raise NotImplementedError
+  return -1 * self
 
 
 
