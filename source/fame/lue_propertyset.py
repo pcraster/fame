@@ -139,9 +139,9 @@ class PropertySet(object):
       if isinstance(p.pset_domain, lue_points.Points):
 
         if self.time_discretisation == TimeDiscretization.dynamic:
-          p_shape = ()
+          p_shape = (nr_timesteps,)
           prop = pset.add_property(property_name, dtype=np.dtype(dtype), shape=p_shape, value_variability=ldm.ValueVariability.variable)
-          prop.value.expand(self.nr_objects() * nr_timesteps)
+          prop.value.expand(self.nr_objects())# * nr_timesteps)
         else:
           prop = pset.add_property(property_name, dtype=np.dtype(dtype))
           prop.value.expand(self.nr_objects())
@@ -249,17 +249,35 @@ class PropertySet(object):
         # Dynamic data...
         else:
           # Determine current time slice to write
-          sidx = int(lue_pset.object_tracker.active_set_index[timestep])
-          eidx = sidx + nr_objects
+          #sidx = int(lue_pset.object_tracker.active_set_index[timestep])
+          #eidx = sidx + nr_objects
 
           for prop in self._properties:
+
+            if prop.time_discretisation == TimeDiscretization.dynamic:
             # TODO
-            if prop.name != 'neighboured_houses' and prop.name != 'neighboured_foodstores' and prop.name != 'social_neighbours':
+
+              if prop.name != 'neighboured_houses' and prop.name != 'neighboured_foodstores' and prop.name != 'social_neighbours':
                 lue_prop = lue_pset.properties[prop.name]
-                #lue_prop.value[sidx:eidx] = prop.values.values
-                #lue_prop.value[sidx:eidx] = prop.values().values[0]
-                for idx, val in enumerate(prop.values().values):
-                  lue_prop.value[sidx + idx] = prop.values().values[idx]
+                if isinstance(prop.pset_domain, lue_points.Points):
+                  for idx, val in enumerate(prop.values().values):
+                    lue_prop.value[:][idx, timestep -1] = prop.values().values[idx]
+                    tmp = lue_prop.value[idx]
+                    tmp[timestep - 1] = prop.values().values[idx]
+                    lue_prop.value[idx] = tmp
+                else:
+
+
+                  print('field')
+
+
+
+            ###if prop.name != 'neighboured_houses' and prop.name != 'neighboured_foodstores' and prop.name != 'social_neighbours':
+                ###lue_prop = lue_pset.properties[prop.name]
+                ####lue_prop.value[sidx:eidx] = prop.values.values
+                ####lue_prop.value[sidx:eidx] = prop.values().values[0]
+                ###for idx, val in enumerate(prop.values().values):
+                  ###lue_prop.value[sidx + idx] = prop.values().values[idx]
 
         #else:
           # in initial...

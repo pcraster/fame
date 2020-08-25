@@ -29,6 +29,8 @@ class LueMemory(object):
       #self.lue_epoch = None
       self._lue_clock = None
       self.lue_time_extent = None
+      self.timeset = False
+
 
 
 
@@ -66,7 +68,7 @@ class LueMemory(object):
 
 
 
-    def add_framework(self):
+    def add_framework(self, nr_objects):
       """ Adding a phenomenon holding framwork relevant information
           in a good case this can be shared between phenomena
       """
@@ -77,7 +79,7 @@ class LueMemory(object):
 
       self.lue_time_extent = tmp.add_property_set(
               "fame_time_cell",
-              ldm.TimeConfiguration(ldm.TimeDomainItemType.cell), self.lue_clock)
+              ldm.TimeConfiguration(ldm.TimeDomainItemType.box), self.lue_clock)
 
       # just a number, TODO sampleNumber?
       simulation_id = 1
@@ -85,17 +87,31 @@ class LueMemory(object):
       # dynamic...
       time_cell = tmp.property_sets["fame_time_cell"]
 
-      # add one timstep, 0=inital, 1...T=timesteps
-      timesteps = self._nr_timesteps + 1
+      time_boxes = 1
 
-      time_cell.object_tracker.active_set_index.expand(timesteps) \
-        [-timesteps:] = np.arange(0, timesteps, dtype=np.dtype(np.uint64))
+      #time_cell.object_tracker.active_object_id.expand(time_boxes * nr_objects)[:] = np.arange(0, nr_objects, dtype=np.dtype(np.uint64))
 
-      time_cell.object_tracker.active_object_id.expand(timesteps) \
-        [-timesteps:] = np.full(timesteps, simulation_id, dtype=ldm.dtype.ID)
+      #time_cell.object_tracker.active_object_index.expand(time_boxes * nr_objects)[:] = list(np.zeros(nr_objects, dtype=np.dtype(np.uint64)))
 
-      time_cell.time_domain.value.count.expand(1)[-1] = timesteps
-      time_cell.time_domain.value.expand(1)[-1] = np.array([0, timesteps], dtype=ldm.dtype.TickPeriodCount).reshape(1, 2)
+      time_cell.object_tracker.active_set_index.expand(time_boxes)[:] = 0
+
+      #time_domain = point_pset.time_domain
+      time_cell.time_domain.value.expand(time_boxes)[:] = [0, self._nr_timesteps]
+
+
+      ###### add one timstep, 0=inital, 1...T=timesteps
+      #####timesteps = self._nr_timesteps + 1
+
+      #####time_cell.object_tracker.active_set_index.expand(timesteps) \
+        #####[-timesteps:] = np.arange(0, timesteps, dtype=np.dtype(np.uint64))
+
+      #####time_cell.object_tracker.active_object_id.expand(timesteps) \
+        #####[-timesteps:] = np.full(timesteps, simulation_id, dtype=ldm.dtype.ID)
+
+      #####time_cell.time_domain.value.count.expand(1)[-1] = timesteps
+      #####time_cell.time_domain.value.expand(1)[-1] = np.array([0, timesteps], dtype=ldm.dtype.TickPeriodCount).reshape(1, 2)
+
+
 
 
       # We create one time cell with nr of timesteps (dynamic)
@@ -146,7 +162,13 @@ class LueMemory(object):
       tmp.object_id.expand(p.nr_objects)[:] = p.object_ids
 
 
+      if self.timeset == False:
+        self.add_framework(p.nr_objects)
+        self.timeset = True
+
       ldm.assert_is_valid(self.lue_filename)
+
+
 
       return p
 
@@ -171,7 +193,6 @@ class LueMemory(object):
       self.lue_dataset = ldm.create_dataset(self.lue_filename)
 
 
-      self.add_framework()
 
       ldm.assert_is_valid(self.lue_filename)
 

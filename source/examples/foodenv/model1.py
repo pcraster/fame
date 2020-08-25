@@ -82,7 +82,7 @@ class FoodConsumption(DynamicModel):
 
 
     self.household.frontdoor.a = fame.uniform(self.household.frontdoor, -0.0001, 0.0001, seed)
-    self.household.frontdoor.a = 1#fame.uniform(self.household.frontdoor, -0.0001, 0.0001, seed)
+    #self.household.frontdoor.a = 1#fame.uniform(self.household.frontdoor, -0.0001, 0.0001, seed)
     self.household.frontdoor.betaH = 0.8
     self.household.frontdoor.gammaH = 0.8
     self.household.frontdoor.resultingSlopeAtZero = (self.household.frontdoor.gammaH * self.household.frontdoor.betaH) / 0.4
@@ -175,8 +175,7 @@ class FoodConsumption(DynamicModel):
     self.foodstore.frontdoor.write(self.currentTimeStep())
     self.foodstore.surrounding.write(self.currentTimeStep())
 
-    self.timestep = 0.1
-    print(self.household.frontdoor.x.values().values)
+    self.timestep = 0.01
 
   # household
   def diffEqTermOne(self, x, a, betaH, gammaH):
@@ -193,9 +192,9 @@ class FoodConsumption(DynamicModel):
     #y = averageOnId(shopIDs,x)
 
 
-    #self.household.frontdoor.write(self.currentTimeStep())
+    self.household.frontdoor.write(self.currentTimeStep())
 
-timesteps = 7
+timesteps = 6
 
 myModel = FoodConsumption()
 dynFrw = DynamicFramework(myModel, timesteps)

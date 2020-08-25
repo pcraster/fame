@@ -110,14 +110,20 @@ class Phenomenon(object):
 
 
       tmp_location = self._lue_dataset.phenomena[self.__name__].property_sets[pset_name]
+      time_boxes = 1
 
       # Index of active set (we only use one set per time cell)
-      tmp_location.object_tracker.active_set_index.expand(nr_timesteps)[0:] = np.arange(0, nr_ts_x_objects, len(self._object_ids))
+      #tmp_location.object_tracker.active_set_index.expand(nr_timesteps)[0:] = np.arange(0, nr_ts_x_objects, len(self._object_ids))
+      tmp_location.object_tracker.active_set_index.expand(time_boxes)[:] = 0# np.arange(0, nr_ts_x_objects, len(self._object_ids))
+
 
       # IDs of the active objects of time cells.
-      tmp_location.object_tracker.active_object_id.expand(nr_ts_x_objects)[-nr_ts_x_objects:] = ts_obj_id
+      #tmp_location.object_tracker.active_object_id.expand(nr_ts_x_objects)[-nr_ts_x_objects:] = ts_obj_id
+      tmp_location.object_tracker.active_object_id.expand(time_boxes * self._nr_objects)[:] = np.arange(0, self._nr_objects, dtype=np.dtype(np.uint64))
 
-      tmp_location.object_tracker.active_object_index.expand(nr_ts_x_objects)[:] = np.repeat(np.arange(0, 1), repeats=nr_ts_x_objects)
+
+      #tmp_location.object_tracker.active_object_index.expand(nr_ts_x_objects)[:] = np.repeat(np.arange(0, 1), repeats=nr_ts_x_objects)
+      tmp_location.object_tracker.active_object_index.expand(time_boxes * self._nr_objects)[:] = list(np.zeros(self._nr_objects, dtype=np.dtype(np.uint64)))
 
       # Assign coordinates
       if space_type == ldm.SpaceDomainItemType.point:
