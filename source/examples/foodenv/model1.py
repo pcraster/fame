@@ -56,12 +56,7 @@ class FoodConsumption(DynamicModel):
     self.household.frontdoor.add_property('propensity')
 
     # These properties will be constant over time and stored once
-    self.household.frontdoor.add_property('default_propensity', time_discretisation=fame.TimeDiscretization.static)
-    self.household.frontdoor.add_property('alpha', time_discretisation=fame.TimeDiscretization.static)
-    self.household.frontdoor.add_property('beta', time_discretisation=fame.TimeDiscretization.static)
-    self.household.frontdoor.add_property('gamma', time_discretisation=fame.TimeDiscretization.static)
     self.household.frontdoor.add_property('buffersize', time_discretisation=fame.TimeDiscretization.static)
-    self.household.frontdoor.add_property('social_neighbours', dtype=numpy.int64)
 
     self.household.frontdoor.add_property('xInitial', time_discretisation=fame.TimeDiscretization.static)
     self.household.frontdoor.add_property('x')
@@ -72,13 +67,7 @@ class FoodConsumption(DynamicModel):
     self.household.frontdoor.add_property('gammaO', time_discretisation=fame.TimeDiscretization.static)
     self.household.frontdoor.add_property('resultingSlopeAtZero', time_discretisation=fame.TimeDiscretization.static)
 
-    ##
-    self.household.frontdoor.alpha = 0.15
-    self.household.frontdoor.beta = 0.5
-    self.household.frontdoor.gamma = 0.0
     self.household.frontdoor.buffersize = 500
-    self.household.frontdoor.default_propensity = 0.2
-    self.household.frontdoor.default_propensity += 0.2
 
 
     self.household.frontdoor.a = fame.uniform(self.household.frontdoor, -0.0001, 0.0001, seed)
@@ -95,11 +84,6 @@ class FoodConsumption(DynamicModel):
     self.household.frontdoor.xInitial = fame.uniform(self.household.frontdoor, -2, 2, seed)
     self.household.frontdoor.x = self.household.frontdoor.xInitial
 
-
-    lower = -0.18344355629253628
-    upper = -0.16344355629253626
-    self.household.frontdoor.propensity = fame.uniform(self.household.frontdoor, lower, upper, seed)
-
     self.household.frontdoor.social_neighbours = neighbour_network(self.household.nr_objects, 2, 0.1, seed)
 
 
@@ -114,15 +98,11 @@ class FoodConsumption(DynamicModel):
 
     self.foodstore.add_property_set('frontdoor', shop_locations, fame.TimeDomain.dynamic)
 
-    self.foodstore.frontdoor.add_property('fpropensity')
     self.foodstore.frontdoor.add_property('buffersize')
-    self.foodstore.frontdoor.add_property('delta')
-    self.foodstore.frontdoor.add_property('upper')
 
-    self.foodstore.frontdoor.upper = -0.16344355629253626
-    self.foodstore.frontdoor.fpropensity = fame.uniform(self.foodstore.frontdoor, lower, self.foodstore.frontdoor.upper, seed)
+    self.foodstore.frontdoor.add_property('y')
+
     self.foodstore.frontdoor.buffersize = 500
-    self.foodstore.frontdoor.delta = 0.2
 
 
     # Foodstore, 2d properties
@@ -177,6 +157,12 @@ class FoodConsumption(DynamicModel):
 
     self.timestep = 0.01
 
+    # initialize store propensity
+    total_average = fame.agents_average(self.household.frontdoor.x)
+    neighboured_houses_prop = network_average_def(self.foodstore.frontdoor.neighboured_houses, self.household.frontdoor.x, total_average)
+
+    self.foodstore.frontdoor.y = neighboured_houses_prop
+
   # household
   def diffEqTermOne(self, x, a, betaH, gammaH):
     return -((betaH / (1.0 + fame.exp(-gammaH*(x-a)))) - (betaH/2.0))
@@ -186,19 +172,30 @@ class FoodConsumption(DynamicModel):
     return ((betaO / (1.0 + fame.exp(-gammaO*(y-a)))) - (betaO/2.0))
 
   def dynamic(self):
-    y = 3
-    self.household.frontdoor.x = self.household.frontdoor.x + self.timestep * (self.diffEqTermOne(self.household.frontdoor.x, self.household.frontdoor.a, self.household.frontdoor.betaH, self.household.frontdoor.gammaH) + self.diffEqTermTwo(y, self.household.frontdoor.a, self.household.frontdoor.betaO, self.household.frontdoor.gammaO))
-    # shop propensity is equal to average of propensity of all households
-    #y = averageOnId(shopIDs,x)
+
+    # Calculate average store propensity in neighbourhood of houses
+    total_average = fame.agents_average(self.foodstore.frontdoor.y)
+    neighboured_store_prop = network_average_def(self.household.frontdoor.neighboured_foodstores, self.foodstore.frontdoor.y, total_average)
+
+    # New household propensity
+    self.household.frontdoor.x = self.household.frontdoor.x + self.timestep * (self.diffEqTermOne(self.household.frontdoor.x, self.household.frontdoor.a, self.household.frontdoor.betaH, self.household.frontdoor.gammaH) + self.diffEqTermTwo(neighboured_store_prop, self.household.frontdoor.a, self.household.frontdoor.betaO, self.household.frontdoor.gammaO))
 
 
+    # Calculate average house propensity in neighbourhood of stores
+    total_average = fame.agents_average(self.household.frontdoor.x)
+    neighboured_houses_prop = network_average_def(self.foodstore.frontdoor.neighboured_houses, self.household.frontdoor.x, total_average)
 
-    # dynamic map algebra operation...
+    # New store propensity
+    self.foodstore.frontdoor.y = neighboured_houses_prop
+
+
+    # just a dynamic map algebra operation...
     self.foodstore.surrounding.dynamicfield += 1
 
 
     self.household.frontdoor.write(self.currentTimeStep())
     self.foodstore.surrounding.write(self.currentTimeStep())
+
 
 timesteps = 6
 
