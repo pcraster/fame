@@ -82,7 +82,6 @@ class FoodConsumption(DynamicModel):
 
 
     self.household.frontdoor.a = fame.uniform(self.household.frontdoor, -0.0001, 0.0001, seed)
-    #self.household.frontdoor.a = 1#fame.uniform(self.household.frontdoor, -0.0001, 0.0001, seed)
     self.household.frontdoor.betaH = 0.8
     self.household.frontdoor.gammaH = 0.8
     self.household.frontdoor.resultingSlopeAtZero = (self.household.frontdoor.gammaH * self.household.frontdoor.betaH) / 0.4
@@ -132,7 +131,8 @@ class FoodConsumption(DynamicModel):
     self.foodstore.add_property_set('surrounding', areas, fame.TimeDomain.static)
 
     # Add one dynamic property
-    # self.foodstore.surrounding.add_property('dynamicfield', time_discretisation=fame.TimeDiscretization.dynamic)
+    self.foodstore.surrounding.add_property('dynamicfield', time_discretisation=fame.TimeDiscretization.dynamic)
+    self.foodstore.surrounding.dynamicfield = -1 + fame.uniform(self.foodstore.surrounding, 0, 1, seed)
 
     # Add static properties
     self.foodstore.surrounding.add_property('randomfield', time_discretisation=fame.TimeDiscretization.static)
@@ -192,7 +192,13 @@ class FoodConsumption(DynamicModel):
     #y = averageOnId(shopIDs,x)
 
 
+
+    # dynamic map algebra operation...
+    self.foodstore.surrounding.dynamicfield += 1
+
+
     self.household.frontdoor.write(self.currentTimeStep())
+    self.foodstore.surrounding.write(self.currentTimeStep())
 
 timesteps = 6
 

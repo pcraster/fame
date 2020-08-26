@@ -310,7 +310,7 @@ def select_variable_different_shape_constant_shape_arrays(
     assert time_domain.value.nr_boxes == 1
 
     # Construct list of time steps...
-    nr_timesteps = time_domain.value[0][1] + 1
+    nr_timesteps = time_domain.value[0][1]# + 1
 
     clock = time_domain.clock
     epoch = clock.epoch
@@ -537,7 +537,7 @@ def select(
     phen_name = phenomenon.id.name
 
     result = {}
-    result[phen_name] = select_arrays(arrays, all_object_ids, all_object_ids)# [4,5])#
+    result[phen_name] = select_arrays(arrays, all_object_ids, all_object_ids)
 
     return result
 

@@ -189,7 +189,8 @@ class PropertySet(object):
         rank = 2
         if self.time_discretisation == TimeDiscretization.dynamic:
           for idx, item in enumerate(p.pset_domain):
-            prop.value.expand(idx, tuple([nr_timesteps, item[4], item[5]]), self.nr_objects())
+            #prop.value.expand(idx, tuple([nr_timesteps, item[4], item[5]]), self.nr_objects())
+            prop.value.expand(idx, tuple([item[4], item[5]]), nr_timesteps)
         else:
           shapes = np.zeros(self.nr_objects() * rank, dtype=ldm.dtype.Count).reshape(self.nr_objects(), rank)
 
@@ -241,8 +242,12 @@ class PropertySet(object):
             if prop.time_discretisation == TimeDiscretization.dynamic:
               if prop.name != 'neighboured_houses' and prop.name != 'neighboured_foodstores' and prop.name != 'social_neighbours':
                 lue_prop = lue_pset.properties[prop.name]
-                for idx, val in enumerate(prop.values().values):
-                  lue_prop.value[idx] = prop.values().values[idx]
+                if isinstance(prop.pset_domain, lue_points.Points):
+                  for idx, val in enumerate(prop.values().values):
+                    lue_prop.value[idx] = prop.values().values[idx]
+                else:
+                  for idx, val in enumerate(prop.values().values):
+                    lue_prop.value[object_ids[idx]][0] = prop.values().values[idx]
 
 
         #if timestep is not None:
@@ -261,14 +266,14 @@ class PropertySet(object):
                 lue_prop = lue_pset.properties[prop.name]
                 if isinstance(prop.pset_domain, lue_points.Points):
                   for idx, val in enumerate(prop.values().values):
-                    lue_prop.value[:][idx, timestep -1] = prop.values().values[idx]
+                    lue_prop.value[:][idx, timestep - 1] = prop.values().values[idx]
                     tmp = lue_prop.value[idx]
                     tmp[timestep - 1] = prop.values().values[idx]
                     lue_prop.value[idx] = tmp
                 else:
+                  for idx, val in enumerate(prop.values().values):
+                    lue_prop.value[object_ids[idx]][timestep - 1] = prop.values().values[idx]
 
-
-                  print('field')
 
 
 
