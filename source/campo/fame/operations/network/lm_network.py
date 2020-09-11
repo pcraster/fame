@@ -3,7 +3,7 @@ import numpy
 import networkx as nx
 
 
-import fame.luemem_values as fame_values
+import campo.luemem_values as fame_values
 
 
 

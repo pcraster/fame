@@ -4,7 +4,7 @@ import numpy
 import os
 import subprocess
 
-import fame.lue_property as lue_property
+import campo.lue_property as lue_property
 
 
 

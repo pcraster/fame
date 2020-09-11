@@ -3,9 +3,9 @@ import numpy
 import os
 import subprocess
 
-import fame.lue_property as lue_property
-import fame.lue_points as points
-import fame.lue_areas as areas
+import campo.lue_property as lue_property
+import campo.lue_points as points
+import campo.lue_areas as areas
 
 #import pcraster
 
