@@ -4,8 +4,9 @@ import numpy
 
 import pcraster
 
-import fame.lue_property as lue_property
+import campo.lue_property as lue_property
 
+import campo
 
 
 def _spatial_operation(area_property, spatial_operation):
@@ -104,6 +105,32 @@ def report(area_property, output_dir=os.getcwd(), timestep=None, pcr_type=None):
 
 
 
+def spread(start_locations, frictiondist, friction):
+  """ """
+
+
+  result_prop = campo.lue_property.Property('emptyspreadname', start_locations.pset_uuid, start_locations.space_domain, start_locations.shapes)
+
+
+  for idx in start_locations.values().values.keys():
+    values = start_locations.values().values[idx]
+    _set_current_clone(start_locations, idx)
+
+    frictiondistvalues = frictiondist.values().values[idx]
+    frictionvalues = friction.values().values[idx]
+
+    arg1_raster = pcraster.numpy2pcr(pcraster.Nominal, values, -999) #numpy.nan)
+    frictiondist_raster = pcraster.numpy2pcr(pcraster.Scalar, frictiondistvalues, numpy.nan)
+    friction_raster = pcraster.numpy2pcr(pcraster.Scalar, frictionvalues, numpy.nan)
+    pcraster.report(arg1_raster,'a.map')
+    pcraster.report(frictiondist_raster,'b.map')
+    pcraster.report(friction_raster,'c.map')
+
+    result_raster = pcraster.spread(arg1_raster, frictiondist_raster, friction_raster)
+    result_item = pcraster.pcr2numpy(result_raster, numpy.nan)
+    result_prop.values().values[idx] = result_item
+
+  return result_prop
 
 
 
@@ -112,11 +139,7 @@ def report(area_property, output_dir=os.getcwd(), timestep=None, pcr_type=None):
 
 
 
-
-
-
-
-def spread(property_set, start_locations, frictiondist, friction):
+def spread2(property_set, start_locations, frictiondist, friction):
   """ """
 
   # generate a property to store the result
@@ -180,15 +203,14 @@ def _new_property_from_property(area_property, multiplier):
 
 def _set_current_clone(area_property, item_idx):
 
-    west = area_property.pset_domain.p1.xcoord[item_idx]
-    north = area_property.pset_domain.p1.ycoord[item_idx]
+    west = area_property.space_domain.p1.xcoord[item_idx]
+    north = area_property.space_domain.p1.ycoord[item_idx]
 
-    rows = int(area_property.pset_domain.row_discr[item_idx])
-    cols = int(area_property.pset_domain.col_discr[item_idx])
+    rows = int(area_property.space_domain.row_discr[item_idx])
+    cols = int(area_property.space_domain.col_discr[item_idx])
 
 
-    cellsize = (area_property.pset_domain.p2.xcoord[item_idx] - west ) / cols
-
+    cellsize = (area_property.space_domain.p2.xcoord[item_idx] - west ) / cols
 
     pcraster.setclone(rows, cols, cellsize, west, north)
 

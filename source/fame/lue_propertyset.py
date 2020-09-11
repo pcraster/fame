@@ -4,11 +4,11 @@ import uuid
 import lue.data_model as ldm
 
 
-import fame.lue_points as lue_points
-import fame.lue_areas as lue_areas
-import fame.lue_property as lue_property
-import fame.lue_phenomenon as fame_phen
-import fame.luemem_values as fame_values
+import campo.lue_points as lue_points
+import campo.lue_areas as lue_areas
+import campo.lue_property as lue_property
+import campo.lue_phenomenon as fame_phen
+import campo.luemem_values as fame_values
 
 from .fame_utils import TimeDiscretization
 
@@ -16,25 +16,35 @@ from .fame_utils import TimeDiscretization
 
 class PropertySet(object):
 
-    def __init__(self, phen, space_domain=None, time_domain=None):
+    def __init__(self, name, nr_agents, space_domain, shape):
 
-      self._lue_dataset_name = None
-      self._lue_phenomenon_name = None
-      self._phen = phen
-
-      self._properties = set()
-
-      self.__name__ = None
-
-      self._domain = None
-
+      self._properties = {}
+      self._name = name
+      self._nr_agents = nr_agents
       self._space_domain = space_domain
-      self._time_domain = time_domain
-
+      self._shape = shape
       self._uuid = uuid.uuid4()
-      self.shapes = None
 
-      self.time_discretisation = None
+
+
+
+      #self._lue_dataset_name = None
+      #self._lue_phenomenon_name = None
+      #self._phen = phen
+
+      #self._properties = set()
+
+      #self.__name__ = None
+
+      #self._domain = None
+
+      #self._space_domain = space_domain
+      #self._time_domain = time_domain
+
+      #self._uuid = uuid.uuid4()
+      #self.shapes = None
+
+      #self.time_discretisation = None
 
 
     @property
@@ -55,10 +65,27 @@ class PropertySet(object):
       return self._domain
 
 
+    @property
     def nr_objects(self):
-      return self._phen
+      return self._nr_agents
 
 
+    @property
+    def name(self):
+      return self._name
+
+    @property
+    def space_domain(self):
+      return self._space_domain
+
+    @property
+    def properties(self):
+      return self._properties
+
+
+    @property
+    def shapes(self):
+      return self._shape
 
     def __len__(self):
       return len(self._properties)
@@ -67,16 +94,16 @@ class PropertySet(object):
 
 
 
-    def __getattr__(self, property_name):
-      result = None
-      try:
-        for p in self._properties:
-          if p.name == property_name:
-            result = p
+    #def __getattr__(self, property_name):
+      #result = None
+      #try:
+        #for p in self._properties:
+          #if p.name == property_name:
+            #result = p
 
-        return result
-      except Exception:
-        pass
+        #return result
+      #except Exception:
+        #pass
 
 
 
@@ -291,18 +318,37 @@ class PropertySet(object):
         #lue.assert_is_valid(self._lue_dataset_name)
 
 
+    #def __setattr__(self, name, value):
+      #try:
+        #attr = getattr(self, name)
+        #if not isinstance(attr, lue_property.Property):
+          #super().__setattr__(name, value)
+        #else:
+          #if not isinstance(value, lue_property.Property):
+            #attr.set_values(value)
+          #else:
+            ##super().__setattr__(name, value)
+            #attr.set_values(value)
+      #except AttributeError as e:
+        #super().__setattr__(name, value)
+
+
+    def __getattr__(self, name):
+
+      if name in self._properties:
+        return self._properties[name]
+
+
+
     def __setattr__(self, name, value):
-      try:
-        attr = getattr(self, name)
-        if not isinstance(attr, lue_property.Property):
-          super().__setattr__(name, value)
+
+      if name.startswith('_', 0, 1):
+        self.__dict__[name] = value
+      else:
+        # We assume the modeller wants to access an existing property
+        if name in self._properties:
+          self._properties[name].set_values(value)
         else:
-          if not isinstance(value, lue_property.Property):
-            attr.set_values(value)
-          else:
-            #super().__setattr__(name, value)
-            attr.set_values(value)
-      except AttributeError as e:
-        super().__setattr__(name, value)
-
-
+          # Create a new property
+          p = lue_property.Property(name, self._uuid, self._space_domain, self._shape, value)
+          self._properties[name] = p

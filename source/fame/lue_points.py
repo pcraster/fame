@@ -71,7 +71,7 @@ class Points(object):
       for idx, item in enumerate(content):
         v[idx,0] = item[0]
         v[idx,1] = item[1]
-      numpy.random.shuffle(v)
+     # numpy.random.shuffle(v)
 
       self.xcoord = v[:,0]
       self.ycoord = v[:,1]

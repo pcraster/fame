@@ -1,13 +1,61 @@
 import numbers
 import os
 import numpy as np
-#import copy
 
-#from .luemem_values import *
+import campo.luemem_values as fame_values
 
-import fame.luemem_values as fame_values
+
 
 class Property(object):
+  def __init__(self, name, pset_uuid, pset_domain, shape, initial_value = np.nan):
+
+        self._name = name
+        self._pset_uuid = pset_uuid
+        self._pset_domain = pset_domain
+
+        self._nr_agents = self._pset_domain.nr_items
+        self._shape = shape
+
+        self._is_dynamic = False
+
+        self._values = fame_values.Values2(self._nr_agents, self._shape, initial_value)
+
+
+  @property
+  def is_dynamic(self):
+    return self._is_dynamic
+
+  def values(self):
+      return self._values
+
+  @property
+  def nr_objects(self):
+    return self._nr_agents
+
+  @property
+  def pset_uuid(self):
+      return self._pset_uuid
+
+  @property
+  def space_domain(self):
+      return self._pset_domain
+
+
+  @property
+  def name(self):
+      return self._name
+
+  @property
+  def shapes(self):
+      return self._shape
+
+  def set_values(self, values):
+      self._values = fame_values.Values2(self._nr_agents, self._shape, values)
+
+
+
+
+class Property2(object):
     def __init__(self, pset, shapes, pset_uuid, pset_domain, time_discretisation):
 
         self._pset = pset

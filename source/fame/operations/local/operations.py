@@ -1,13 +1,67 @@
 import copy
 import numpy
 
-import fame
+import campo
 
-import fame.lue_points as points
-import fame.lue_areas as areas
+import campo.lue_points as points
+import campo.lue_areas as areas
 
 
-def uniform(property_set, lower=0.0, upper=1.0, seed=0):
+
+def uniform(lower, upper, seed=0):
+  """ Returns uniform value for each object. Can be applied to fields and objects.
+
+  :param property_set: Property set
+  :type arg1: PropertySet
+  :param lower: lower boundary
+  :type Property: number or Property from the same property set
+  :param upper: upper boundary
+  :type Property: number or Property from the same property set
+  :param seed: random seed (default 0)
+  :type int
+  :returns: a property with summed values
+  :rtype: Property
+  """
+  if not isinstance(lower, fame.lue_property.Property):
+    raise ValueError
+
+  if not isinstance(upper, fame.lue_property.Property):
+    raise ValueError
+
+  if lower.pset_uuid != upper.pset_uuid:
+      msg = 'Property "{}" and property "{}" are not from the same PropertySet '.format(lower.name, upper.name)
+      raise ValueError(msg)
+
+  tmp_prop = fame.lue_property.Property('emptyuniformname', lower.pset_uuid, lower.space_domain, lower.shapes)
+
+
+  for idx in range(lower.nr_objects):
+    values = None
+    if isinstance(lower.space_domain, points.Points):
+      if seed != 0:
+        numpy.random.seed(seed + idx)
+      values = numpy.random.uniform(lower.values()[idx], upper.values()[idx])
+    elif isinstance(lower.space_domain, areas.Areas):
+      if seed != 0:
+        numpy.random.seed(seed + idx)
+      values = numpy.random.uniform(lower.values()[idx], upper.values()[idx], (int(lower.space_domain.row_discr[idx]), int(lower.space_domain.col_discr[idx])))
+    else:
+      raise NotImplementedError
+
+    tmp_prop.values()[idx] = values
+
+
+  return tmp_prop
+
+
+
+
+
+
+
+
+
+def uniform2(property_set, lower=0.0, upper=1.0, seed=0):
   """ Returns uniform value for each object. Can be applied to fields and objects.
 
   :param property_set: Property set

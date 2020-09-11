@@ -1,7 +1,7 @@
 import numpy as np
 from collections import OrderedDict
 
-import fame.lue_property as lue_property
+import campo.lue_property as lue_property
 
 
 

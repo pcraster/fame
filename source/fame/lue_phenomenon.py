@@ -1,13 +1,15 @@
 import numpy as np
 import os
+import csv
 
 import lue
 import lue.data_model as ldm
 
 
-import fame.lue_points as lue_points
-import fame.lue_propertyset as fame_pset
+import campo.lue_points as lue_points
+import campo.lue_propertyset as fame_pset
 from .lue_points import Points
+from .lue_areas import Areas
 
 from .fame_utils import TimeDomain
 
@@ -17,21 +19,23 @@ from .fame_utils import TimeDomain
 
 class Phenomenon(object):
 
-    def __init__(self, nr_objects, working_dir=os.getcwd()):
+   # def __init__(self, nr_objects, working_dir=os.getcwd()):
+    def __init__(self, name):
 
-        self._property_sets = set()
+        #self._property_sets = set()
 
-        self.working_dir = working_dir
-        self._nr_objects = nr_objects
+        #self.working_dir = working_dir
+        #self._nr_objects = nr_objects
 
-        # Plain list of object IDs
-        self._object_ids = np.arange(self._nr_objects, dtype=ldm.dtype.ID)
+        ## Plain list of object IDs
+        #self._object_ids = np.arange(self._nr_objects, dtype=ldm.dtype.ID)
 
-        self._lue_dataset = None
-        self._lue_dataset_name = None
-        self._nr_timesteps = None
+        #self._lue_dataset = None
+        #self._lue_dataset_name = None
+        #self._nr_timesteps = None
 
-
+        self._name = name
+        self._property_sets = {}
 
 
 
@@ -41,19 +45,64 @@ class Phenomenon(object):
 
 
     def __getattr__(self, property_set_name):
-      result = None
 
-      for pset in self._property_sets:
-        if pset.__name__ == property_set_name:
-          result = pset
 
-      return result
+      if property_set_name in self._property_sets:
+        return self._property_sets[property_set_name]
 
 
 
+    def _read_domain(self, filename):
+
+      nr_objects = None
+      domain = None
+      shape = None
+
+      # simple test if file contains points or field
+      with open(filename, 'r') as csvfile:
+        reader = csv.reader(csvfile)
+        content = list(reader)
+
+        nr_objects = len(content)
+
+        if len(content[0]) == 2:
+          # point agents
+          domain = Points()
+          domain.read(filename)
+
+          shape = [(1,)] * nr_objects
 
 
-    def add_property_set(self, pset_name, space_domain=None, time_domain=None):
+        elif len(content[0]) == 6:
+          # field agents
+          domain = Areas()
+          domain.read(filename)
+          shape = [(int(domain.row_discr[i]), int(domain.col_discr[i])) for i in range(nr_objects)]
+
+
+        else:
+          raise NotImplementedError
+
+
+      assert nr_objects is not None
+      assert domain is not None
+      assert shape is not None
+
+      return nr_objects, domain, shape
+
+
+    def add_property_set(self, pset_name, filename):
+
+      nr_objects, domain, shape  = self._read_domain(filename)
+
+
+      p = fame_pset.PropertySet(pset_name, nr_objects, domain, shape)
+      self._property_sets[pset_name] = p
+
+
+
+
+    def add_property_set2(self, pset_name, space_domain=None, time_domain=None):
       """ Adding a property set """
       assert isinstance(time_domain, TimeDomain)
 
@@ -183,3 +232,10 @@ class Phenomenon(object):
     def object_ids(self):
       return self._object_ids
 
+    @property
+    def name(self):
+      return self._name
+
+    @property
+    def property_sets(self):
+      return self._property_sets

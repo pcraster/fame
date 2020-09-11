@@ -1,7 +1,7 @@
 import csv
 import numpy
 
-import fame.lue_points as lue_points
+import campo.lue_points as lue_points
 
 class Areas(object):
 
