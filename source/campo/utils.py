@@ -37,8 +37,57 @@ def to_csv(frame, filename):
 
 
 
+def create_point_pdf(frame, filename):
 
-def create_pdf(frame, filename):
+  phen_name = frame.keys()
+
+  wdir = os.getcwd()
+  data_dir = os.path.join(wdir,'data')
+
+  tmp_csv = os.path.join(data_dir, 'agents.csv')
+
+
+  phen_name = frame.keys()
+
+  dfObj = pd.DataFrame()
+
+  for phen_name in frame.keys():
+    phen = frame[phen_name]
+    for pset_name in phen.keys():
+      propset = frame[phen_name][pset_name]
+
+      for prop_name in propset.keys():
+        dfObj['x'] = frame[phen_name][pset_name][prop_name]['coordinates'].data[:, 0]
+        dfObj['y'] = frame[phen_name][pset_name][prop_name]['coordinates'].data[:, 1]
+
+
+      for prop_name in propset.keys():
+        prop = frame[phen_name][pset_name][prop_name]
+
+        dfObj[prop_name] = prop['values'].data
+
+  dfObj.to_csv(tmp_csv, index=False)
+
+  gpkg_fname_out = os.path.join(data_dir, 'agents.gpkg')
+
+  cmd = 'ogr2ogr -s_srs EPSG:28992 -t_srs EPSG:28992 -oo X_POSSIBLE_NAMES=x -oo Y_POSSIBLE_NAMES=y -f GPKG {} {}'.format(gpkg_fname_out, tmp_csv)
+
+  subprocess.check_call(cmd, shell=True, stdout=subprocess.DEVNULL)
+
+
+  cmd = 'gdal_translate -of PDF -a_srs EPSG:28992 data/clone.tiff points.pdf -co OGR_DATASOURCE=out.vrt'
+
+  clone_path = os.path.join(data_dir, 'clone.tiff')
+  vrt_path = os.path.join(data_dir, 'sources.vrt')
+  cmd = 'gdal_translate -of PDF -a_srs EPSG:28992 {} {} -co OGR_DATASOURCE={}'.format(clone_path, filename, vrt_path)
+
+
+  subprocess.check_call(cmd, shell=True, stdout=subprocess.DEVNULL)
+
+
+
+
+def create_field_pdf(frame, filename):
 
   phen_name = frame.keys()
 
@@ -96,14 +145,15 @@ def create_pdf(frame, filename):
   outfile = os.path.join(wdir, filename)
   clone = os.path.join(data_dir, 'clone.tiff')
   roads = os.path.join(data_dir, 'roads.gpkg')
+  roads = os.path.join(data_dir, 'sources.vrt')
 
   rasters = ','.join(fnames)
   names = ','.join(lnames)
 
 
   cmd = 'gdal_translate -q -of PDF -a_srs EPSG:28992 {} {} -co OGR_DATASOURCE={} -co OGR_DISPLAY_FIELD="roads" -co EXTRA_RASTERS={} -co EXTRA_RASTERS_LAYER_NAME={} -co OFF_LAYERS={}'.format(clone, outfile,roads,rasters,names,names )
-  cmd = 'gdal_translate -q -of PDF -a_srs EPSG:28992 {} {} -co OGR_DATASOURCE={} -co OGR_DISPLAY_FIELD="roads" -co EXTRA_RASTERS={} -co EXTRA_RASTERS_LAYER_NAME={}'.format(clone, outfile,roads,rasters,names)
+  #cmd = 'gdal_translate -q -of PDF -a_srs EPSG:28992 {} {} -co OGR_DATASOURCE={} -co OGR_DISPLAY_FIELD="roads" -co EXTRA_RASTERS={} -co EXTRA_RASTERS_LAYER_NAME={}'.format(clone, outfile,roads,rasters,names)
+  cmd = 'gdal_translate -q -of PDF -a_srs EPSG:28992 {} {} -co OGR_DATASOURCE={} -co EXTRA_RASTERS={} -co EXTRA_RASTERS_LAYER_NAME={}'.format(clone, outfile,roads,rasters,names)
 
   subprocess.check_call(cmd, shell=True, stdout=subprocess.DEVNULL)
   shutil.rmtree(tmpdir)
-  print(cmd, len(cmd))
