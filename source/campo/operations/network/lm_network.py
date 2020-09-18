@@ -39,7 +39,7 @@ def network_average_def(source_prop, value_prop, default):
       tmp_prop.values()[idx] = default.values()[0]
     else:
       for n in neighbour_ids[0]:
-        nval = value_prop.values[n]
+        nval = value_prop.values()[n]
         val += nval
       tmp_prop.values()[idx] = val / len(neighbour_ids[0])
 

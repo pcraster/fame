@@ -39,7 +39,7 @@ def _PropOpB(arg1, arg2, op):
   else:
     argument2 = arg2.values()
 
-  for idx,i in enumerate(tmp_prop.values()):
+  for idx in range(0, tmp_prop.nr_objects):
     tmp_prop.values()[idx] = op(tmp_prop.values()[idx], argument2[idx])
 
   return tmp_prop

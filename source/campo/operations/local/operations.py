@@ -11,8 +11,6 @@ import campo.lue_areas as areas
 def uniform(lower, upper, seed=0):
   """ Returns uniform value for each object. Can be applied to fields and objects.
 
-  :param property_set: Property set
-  :type arg1: PropertySet
   :param lower: lower boundary
   :type Property: number or Property from the same property set
   :param upper: upper boundary

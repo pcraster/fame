@@ -16,7 +16,8 @@ class TimeDiscretization(enum.Enum):
 
 
 class TimeUnit(enum.Enum):
-  """ Class to indicate time step unit """
+  """ Enum to indicate time step unit of a model """
 
   day = ldm.Unit.day
+  month = ldm.Unit.month
   year = ldm.Unit.year

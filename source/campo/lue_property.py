@@ -25,6 +25,11 @@ class Property(object):
   def is_dynamic(self):
     return self._is_dynamic
 
+  @is_dynamic.setter
+  def is_dynamic(self, value):
+    self._is_dynamic = value
+
+
   def values(self):
       return self._values
 

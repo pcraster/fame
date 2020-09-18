@@ -11,7 +11,8 @@ from osgeo import osr
 
 def get_others(start_prop, dest_prop, buffer_size):
   # re-use the previous approach to obtain the neighbours within a buffer
-  values = numpy.zeros((len(start_prop),len(dest_prop)), dtype=numpy.int8)
+
+  values = numpy.zeros((len(start_prop.space_domain),len(dest_prop.space_domain)), dtype=numpy.int8)
 
   spatial_ref = osr.SpatialReference()
   spatial_ref.ImportFromEPSG(28992)
@@ -27,7 +28,7 @@ def get_others(start_prop, dest_prop, buffer_size):
 
 
   # Plain storing of object order (id)
-  for idx, p in enumerate(dest_prop):
+  for idx, p in enumerate(dest_prop.space_domain):
     point = ogr.Geometry(ogr.wkbPoint)
 
     point.AddPoint(p[0], p[1])
@@ -43,7 +44,7 @@ def get_others(start_prop, dest_prop, buffer_size):
   lyr_dest = ds.GetLayer('uid')
 
 
-  for idx, p in enumerate(start_prop):
+  for idx, p in enumerate(start_prop.space_domain):
 
     lyr_shop = ds.CreateLayer('destination_locations', geom_type=ogr.wkbPoint, srs=spatial_ref)
     # just a round buffer

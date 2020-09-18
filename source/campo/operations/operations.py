@@ -37,7 +37,7 @@ def agents_average(prop):
   if not isinstance(prop, lue_property.Property):
     raise NotImplementedError
 
-  if not isinstance(prop.pset_domain, points.Points):
+  if not isinstance(prop.space_domain, points.Points):
     raise NotImplementedError
 
   tmp_prop = copy.deepcopy(prop)

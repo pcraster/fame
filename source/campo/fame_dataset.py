@@ -23,10 +23,13 @@ import campo.lue_phenomenon as fame_phen
 
 class LueMemory(object):
 
-    def __init__(self):#, start_timestep, unit, stepsize, last_timestep, first_timestep=1):
+    def __init__(self):
       """ some text """
 
       self._phenomena = {}
+      self._nr_timesteps = None
+      self._lue_clock = None
+      self._lue_time_configuration = None
 
 
       #self.lue_filename = None
@@ -245,12 +248,24 @@ class LueMemory(object):
       if isinstance(property_set.space_domain, lue_points.Points):
 
         if prop.is_dynamic:
-          p_shape = (nr_timesteps,)
+          time_boxes = 1
+          p_shape = (self._nr_timesteps,)
           lue_prop = pset.add_property(prop.name, dtype=np.dtype(dtype), shape=p_shape, value_variability=ldm.ValueVariability.variable)
-          prop.value.expand(nr_objects)
+          lue_prop.value.expand(nr_objects)
+
+
+          pset.object_tracker.active_object_id.expand(time_boxes * nr_objects)[:] = self.lue_dataset.phenomena[phen_name].object_id[:]
+          pset.object_tracker.active_set_index.expand(time_boxes)[:] = 0
+######          pset.object_tracker.active_object_index.expand(time_boxes * nr_objects)[:] = [0] * nr_objects
+
+
+          time_domain = pset.time_domain
+          time_domain.value.expand(time_boxes)[:] = [0, self._nr_timesteps]
+
         else:
           lue_prop = pset.add_property(prop.name, dtype=np.dtype(dtype))
           lue_prop.value.expand(nr_objects)
+
 
       elif isinstance(property_set.space_domain, lue_areas.Areas):
 
@@ -300,17 +315,19 @@ class LueMemory(object):
 
     def _generate_lue_property_set(self, phen_name, property_set):
 
-      rank = 2
+      rank = -1
       space_type = None
       space_configuration = None
-      static = True
+      static = False
+      if self._lue_time_configuration is None:
+        static = True
 
       if isinstance(property_set.space_domain, lue_points.Points):
           space_type = ldm.SpaceDomainItemType.point
-       #   rank = 2
+          rank = 2
       else:
           space_type = ldm.SpaceDomainItemType.box
-        #  rank = 2
+          rank = 2
 
         #if not space_domain.mobile:
       space_configuration = ldm.SpaceConfiguration(
@@ -320,10 +337,10 @@ class LueMemory(object):
         #else:
         #  raise NotImplementedError
 
-
-      ## static fttb
       if static:
         tmp_pset = self.lue_dataset.phenomena[phen_name].add_property_set(property_set.name, space_configuration, np.dtype(np.float64), rank=rank)
+      else:
+        tmp_pset = self.lue_dataset.phenomena[phen_name].add_property_set(property_set.name, self._lue_time_configuration, self._lue_clock, space_configuration, np.dtype(np.float64), rank=rank)
 
       tmp_pset = self.lue_dataset.phenomena[phen_name].property_sets[property_set.name]
 
@@ -338,7 +355,6 @@ class LueMemory(object):
         for idx, item in enumerate(property_set.space_domain):
           tmp_values[idx, 0] = item[0]
           tmp_values[idx, 1] = item[1]
-
         tmp_pset.space_domain.value.expand(property_set.nr_objects)[-property_set.nr_objects:] = tmp_values
 
 
@@ -374,9 +390,10 @@ class LueMemory(object):
 
 
       ## static fttb
-      if static:
-        for prop in property_set.properties.values():
-          self._generate_lue_property(phen_name, property_set, prop)
+      #if static:
+      for prop in property_set.properties.values():
+        self._generate_lue_property(phen_name, property_set, prop)
+      #else:
 
 
 
@@ -402,7 +419,7 @@ class LueMemory(object):
 
 
 
-    def _lue_write_property(self, phen_name, pset, prop):
+    def _lue_write_property(self, phen_name, pset, prop, timestep):
 
       lue_pset = self.lue_dataset.phenomena[phen_name].property_sets[pset.name]
       object_ids = self.lue_dataset.phenomena[phen_name].object_id[:]
@@ -418,8 +435,24 @@ class LueMemory(object):
               else:
                 raise NotImplementedError
 
+      else:
+        if timestep is not None:
+                lue_prop = lue_pset.properties[prop.name]
+                if isinstance(prop.space_domain, lue_points.Points):
+                  for idx, val in enumerate(prop.values().values):
+                    #lue_prop.value[:][idx, timestep - 1] = prop.values().values[idx]
+                    tmp = lue_prop.value[idx]
+                    tmp[timestep - 1] = prop.values().values[idx]
+                    lue_prop.value[idx] = tmp
+                else:
+                  for idx, val in enumerate(prop.values().values):
+                    lue_prop.value[object_ids[idx]][timestep - 1] = prop.values().values[idx]
 
-    def write(self):
+
+      ldm.assert_is_valid(self.lue_filename)
+
+
+    def write(self, timestep=None):
 
       for p in self._phenomena:
         if not p in self.lue_dataset.phenomena:
@@ -427,4 +460,34 @@ class LueMemory(object):
 
         for pset in self._phenomena[p].property_sets.values():
           for prop in pset.properties.values():
-            self._lue_write_property(p, pset, prop)
+            self._lue_write_property(p, pset, prop, timestep)
+
+
+    def set_time(self, start, unit, stepsize, nrTimeSteps):
+      start_timestep = start.isoformat()
+      self._nr_timesteps = nrTimeSteps
+
+      epoch = ldm.Epoch(ldm.Epoch.Kind.common_era, start_timestep, ldm.Calendar.gregorian)
+      self._lue_clock = ldm.Clock(epoch, unit.value, stepsize)
+
+      self._lue_time_configuration = ldm.TimeConfiguration(ldm.TimeDomainItemType.box)
+
+      self.lue_dataset.add_phenomenon('framework')
+      tmp = self.lue_dataset.phenomena['framework']
+
+      self.lue_time_extent = tmp.add_property_set(
+              "campo_time_cell",
+              self._lue_time_configuration, self._lue_clock)
+
+      # just a number, TODO sampleNumber?
+      simulation_id = 1
+
+      # dynamic...
+      time_cell = tmp.property_sets["campo_time_cell"]
+
+      time_boxes = 1
+
+      time_cell.object_tracker.active_set_index.expand(time_boxes)[:] = 0
+      time_cell.time_domain.value.expand(time_boxes)[:] = [0, self._nr_timesteps]
+
+      ldm.assert_is_valid(self.lue_filename)
